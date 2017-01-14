@@ -1,0 +1,251 @@
+package rs.ac.bg.etf.pp1;
+
+
+import java_cup.runtime.*;
+import org.apache.log4j.*;
+
+parser code {:
+	Logger log = Logger.getLogger(getClass());
+      
+    // slede redefinisani metodi za prijavu gresaka radi izmene teksta poruke
+     
+    public void report_fatal_error(String message, Object info) throws java.lang.Exception {
+      done_parsing();
+      report_error(message, info);
+    }
+  
+    public void syntax_error(Symbol cur_token) {
+        report_error("\nSintaksna greska", cur_token);
+    }
+  
+    public void unrecovered_syntax_error(Symbol cur_token) throws java.lang.Exception {
+        report_fatal_error("Fatalna greska, parsiranje se ne moze nastaviti", cur_token);
+    }
+
+    public void report_error(String message, Object info) {
+    	StringBuilder msg = new StringBuilder(message); 
+    	if (info instanceof Symbol)
+            msg.append (" na liniji ").append(((Symbol)info).left);
+        log.error(msg.toString());
+    }
+:}
+
+scan with {:
+	Symbol s = this.getScanner().next_token();
+	if (s != null && s.value != null) 
+		log.info(s.toString() + " " + s.value.toString());
+	return s;
+:}
+
+terminal PROG, CLASS, PRINT, CONST, EQUALS, L_BRACE, R_BRACE, L_PAREN, R_PAREN, SEMI, COMMA, L_INDEXER, R_INDEXER ;
+terminal EXTENDS, STATIC, VOID, DOT, INCREMENT, DECREMENT, TERMSTUB ;
+terminal PLUS, MINUS, PLUS_EQUALS, MINUS_EQUALS, MULTIPLY, DIVIDE, MODULATE, MULTIPLY_EQUALS, DIVIDE_EQUALS, MODULATE_EQUALS ;
+terminal Integer NUMBER ;
+terminal String IDENT ;
+terminal Character CHAR ;
+terminal Boolean BOOL ;
+
+non terminal Program, Type, ClassElementsList, MethodsDecl, ClassElement, ConstDecl, VarDecl, ClassDecl ;
+non terminal ConstList, OneConst, VarsList, OneVar, StaticDeclarator, VoidType, FormPars, Statement, FormParsList, ClassExtender ;
+non terminal MethodsSection, MethodsList, InnerClassVarsList ;
+non terminal DesignatorStatement, Designator, DesignatorStatementOptions, DesignatorOptions, OneDesignatorOption ;
+non terminal Expr, ActParsList, ActPars, Negation, Term, AddTermList, AddOneTerm ;
+non terminal AddOp, AssignOp, AddOpRight, AddOpLeft, MulOp, MulOpRight, MulOpLeft ;
+
+
+Program ::= PROG IDENT ClassElementsList L_BRACE MethodsList R_BRACE ;
+
+ClassElementsList ::= ClassElementsList ClassElement 
+						|
+						/* epsilon */
+						;
+												
+ClassElement ::= ConstDecl 
+				|
+				VarDecl
+				|
+				ClassDecl
+				;
+								
+ConstDecl ::= CONST Type ConstList SEMI ;
+
+ConstList ::= ConstList COMMA IDENT EQUALS OneConst 
+				|
+				IDENT EQUALS OneConst
+				; 
+
+OneConst ::= NUMBER
+				|
+			 	CHAR
+				|
+			 	BOOL
+				;
+ 
+VarDecl ::= Type VarsList SEMI ;
+ 
+VarsList ::= VarsList COMMA OneVar
+ 				|
+ 				OneVar
+ 				;
+ 
+OneVar ::= IDENT 
+ 			|
+ 			IDENT L_INDEXER R_INDEXER
+ 			;
+ 
+Type ::= IDENT ;	
+ 
+ClassDecl ::= CLASS IDENT ClassExtender L_BRACE InnerClassVarsList MethodsSection R_BRACE ; 
+ 
+ClassExtender ::= EXTENDS Type 
+					|
+					/* epsilon */
+					;
+
+InnerClassVarsList ::= InnerClassVarsList VarDecl 
+					|
+					/* epsilon */
+					;
+
+MethodsSection ::= L_BRACE MethodsList R_BRACE ;
+
+MethodsList ::= MethodsList MethodsDecl 
+				|
+				/* epsilon */
+				; 
+
+MethodsDecl ::= StaticDeclarator VoidType IDENT L_PAREN FormPars R_PAREN InnerClassVarsList L_BRACE Statement R_BRACE ;
+
+StaticDeclarator ::= STATIC
+						|
+						/* epsilon */
+						;
+
+VoidType ::= Type
+				|
+				VOID
+				;
+
+FormPars ::= FormParsList
+				|
+				/* epsilon */
+				;
+
+FormParsList ::= FormParsList COMMA Type OneVar
+					|
+					Type OneVar
+					;
+
+Statement ::= DesignatorStatement SEMI
+				|
+				/* epsilon */
+				;
+
+DesignatorStatement ::= Designator DesignatorStatementOptions ;
+
+Designator ::= IDENT DesignatorOptions ;
+
+DesignatorOptions ::= DesignatorOptions OneDesignatorOption 
+						|
+						/* epsilon */
+						;
+   
+OneDesignatorOption ::= DOT IDENT
+						|
+						L_INDEXER Expr R_INDEXER
+						;
+						
+DesignatorStatementOptions ::= AssignOp Expr
+								|
+								L_PAREN ActParsList R_PAREN
+								|
+								INCREMENT
+								|
+								DECREMENT
+								;
+				
+ActParsList ::= ActPars
+				|
+				/* epsilon */
+				;
+				
+ActPars ::= ActPars COMMA Expr
+			|
+			Expr								
+			;
+
+Expr ::= Negation Term AddTermList ;
+
+AddTermList ::= AddTermList AddOneTerm
+				|
+				/* epsilon */
+				;
+
+AddOneTerm ::= AddOp Term ;
+
+AssignOp ::= EQUALS
+			|
+			AddOpRight
+			|
+			MulOpRight
+			;
+
+Negation ::= MINUS
+			|
+			/* epsilon */
+			;
+
+AddOp ::= AddOpLeft
+			|
+			AddOpRight;
+	
+AddOpLeft ::= PLUS
+				|
+				MINUS
+				;
+				
+AddOpRight ::= PLUS_EQUALS
+				|
+				MINUS_EQUALS
+				;				
+
+MulOp ::= MulOpLeft
+			|
+			MulOpRight
+			;
+			
+MulOpLeft ::= MULTIPLY
+				|
+				DIVIDE
+				|
+				MODULATE
+				;
+				
+MulOpRight ::= MULTIPLY_EQUALS
+				|
+				DIVIDE_EQUALS
+				|
+				MODULATE_EQUALS
+				;				
+
+Term ::= TERMSTUB ;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

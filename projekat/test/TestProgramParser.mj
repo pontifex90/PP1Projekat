@@ -1,0 +1,16 @@
+program MJProgram
+
+{
+//	void NekaMetoda() {}
+//	int NekaMetoda2() {}
+//	void NekaMetoda3 (int a) {}
+//	void NekaMetoda4 (int a[]) {}
+//	void NekaMetoda5 (int a, int b) {}
+//	void NekaMetoda6 (int a, int b) {}
+//	void NekaMetoda7 (int a, int b, int c[]) {}
+//	void NekaMetoda8 (int a, int b, int c[]) {}
+	void NekaMetoda5(int a, int b) 
+	{
+		asd--;
+	}
+}
