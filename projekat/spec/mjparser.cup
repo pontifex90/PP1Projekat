@@ -118,7 +118,7 @@ MethodsList ::= MethodsList MethodsDecl
 				/* epsilon */
 				; 
 
-MethodsDecl ::= StaticDeclarator VoidType IDENT L_PAREN FormPars R_PAREN InnerClassVarsList L_BRACE Statement R_BRACE ;
+MethodsDecl ::= StaticDeclarator VoidType IDENT L_PAREN FormPars R_PAREN InnerClassVarsList L_BRACE StatementsList R_BRACE ;
 
 StaticDeclarator ::= STATIC
 						|
@@ -146,9 +146,9 @@ Statement ::= DesignatorStatement SEMI
 				|
 				ForStatement
 				|
-				BREAK
+				BREAK SEMI
 				|
-				CONTINUE
+				CONTINUE SEMI
 				|
 				Return
 				|
@@ -157,8 +157,6 @@ Statement ::= DesignatorStatement SEMI
 				PRINT L_PAREN Expr NumbersList R_PAREN SEMI 
 				|
 				L_BRACE StatementsList R_BRACE
-				|
-				/* epsilon */
 				;
 				
 StatementsList ::= StatementsList Statement
