@@ -38,6 +38,14 @@ return new_symbol(sym.EOF);
 "extends" 	{ return new_symbol(sym.EXTENDS, yytext()); }
 "static"	{ return new_symbol(sym.STATIC, yytext()); }
 "print" 	{ return new_symbol(sym.PRINT, yytext()); }
+"read"	 	{ return new_symbol(sym.READ, yytext()); }
+"continue" 	{ return new_symbol(sym.CONTINUE, yytext()); }
+"break" 	{ return new_symbol(sym.BREAK, yytext()); }
+"return" 	{ return new_symbol(sym.RETURN, yytext()); }
+"if" 		{ return new_symbol(sym.IF, yytext()); }
+"else" 		{ return new_symbol(sym.ELSE, yytext()); }
+"new" 		{ return new_symbol(sym.NEW, yytext()); }
+"for" 		{ return new_symbol(sym.FOR, yytext()); }
 "=" 		{ return new_symbol(sym.EQUALS, yytext()); }
 "{" 		{ return new_symbol(sym.L_BRACE, yytext()); }
 "}" 		{ return new_symbol(sym.R_BRACE, yytext()); }
@@ -60,8 +68,14 @@ return new_symbol(sym.EOF);
 "*=" 		{ return new_symbol(sym.MULTIPLY_EQUALS, yytext()); }
 "/=" 		{ return new_symbol(sym.DIVIDE_EQUALS, yytext()); }
 "%=" 		{ return new_symbol(sym.MODULATE_EQUALS, yytext()); }
- 
-"TS" 		{ return new_symbol(sym.TERMSTUB, yytext()); }
+"&&" 		{ return new_symbol(sym.AND, yytext()); }
+"||" 		{ return new_symbol(sym.OR, yytext()); }
+"==" 		{ return new_symbol(sym.EQUALITY, yytext()); }
+"!=" 		{ return new_symbol(sym.NOT_EQUAL, yytext()); }
+">" 		{ return new_symbol(sym.GREATER, yytext()); }
+">=" 		{ return new_symbol(sym.GREATER_EQUAL, yytext()); }
+"<" 		{ return new_symbol(sym.LESS, yytext()); }
+"<=" 		{ return new_symbol(sym.LESS_EQUAL, yytext()); }
 
 "//"			{yybegin(COMMENT);}
 <COMMENT>. 		{yybegin(COMMENT);}

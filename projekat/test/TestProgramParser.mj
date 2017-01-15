@@ -11,6 +11,10 @@ program MJProgram
 //	void NekaMetoda8 (int a, int b, int c[]) {}
 	void NekaMetoda5(int a, int b) 
 	{
-		asd--;
+		for(;new asd[((asd.asd[asd + 4] + 4))];)
+					a++;
+	
+	// designator - [expr]	 - term - factor - designator - (ActPars) - expr
+		//	a[af(3+3, 51)]++; radi
 	}
 }

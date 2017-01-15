@@ -37,9 +37,10 @@ scan with {:
 	return s;
 :}
 
-terminal PROG, CLASS, PRINT, CONST, EQUALS, L_BRACE, R_BRACE, L_PAREN, R_PAREN, SEMI, COMMA, L_INDEXER, R_INDEXER ;
-terminal EXTENDS, STATIC, VOID, DOT, INCREMENT, DECREMENT, TERMSTUB ;
+terminal PROG, CLASS, CONST, EQUALS, L_BRACE, R_BRACE, L_PAREN, R_PAREN, SEMI, COMMA, L_INDEXER, R_INDEXER ;
+terminal EXTENDS, STATIC, VOID, DOT, INCREMENT, DECREMENT, NEW, FOR, PRINT, READ, CONTINUE, BREAK, RETURN ;
 terminal PLUS, MINUS, PLUS_EQUALS, MINUS_EQUALS, MULTIPLY, DIVIDE, MODULATE, MULTIPLY_EQUALS, DIVIDE_EQUALS, MODULATE_EQUALS ;
+terminal IF, ELSE, AND, OR, EQUALITY, NOT_EQUAL, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL;
 terminal Integer NUMBER ;
 terminal String IDENT ;
 terminal Character CHAR ;
@@ -47,11 +48,14 @@ terminal Boolean BOOL ;
 
 non terminal Program, Type, ClassElementsList, MethodsDecl, ClassElement, ConstDecl, VarDecl, ClassDecl ;
 non terminal ConstList, OneConst, VarsList, OneVar, StaticDeclarator, VoidType, FormPars, Statement, FormParsList, ClassExtender ;
-non terminal MethodsSection, MethodsList, InnerClassVarsList ;
+non terminal MethodsSection, MethodsList, InnerClassVarsList, ForStatement, OptionalDesignatorStatement, OptionalCondition ;
 non terminal DesignatorStatement, Designator, DesignatorStatementOptions, DesignatorOptions, OneDesignatorOption ;
-non terminal Expr, ActParsList, ActPars, Negation, Term, AddTermList, AddOneTerm ;
-non terminal AddOp, AssignOp, AddOpRight, AddOpLeft, MulOp, MulOpRight, MulOpLeft ;
+non terminal Expr, ActParsList, ActPars, Negation, Term, AddTermList, AddOneTerm, Factor, MultiplyFactorList ;
+non terminal AddOp, AssignOp, AddOpRight, AddOpLeft, MulOp, MulOpRight, MulOpLeft, IfStatement, ActParsListOptional ;
+non terminal Condition, CondTerm, CondTermList, CondFact, CondFactList, RelOp, RelOpExprList, NewArrayType ; 
+non terminal Return, NumbersList, OneNumber, StatementsList ;
 
+precedence left ELSE;
 
 Program ::= PROG IDENT ClassElementsList L_BRACE MethodsList R_BRACE ;
 
@@ -138,8 +142,84 @@ FormParsList ::= FormParsList COMMA Type OneVar
 
 Statement ::= DesignatorStatement SEMI
 				|
+				IfStatement
+				|
+				ForStatement
+				|
+				BREAK
+				|
+				CONTINUE
+				|
+				Return
+				|
+				READ L_PAREN Designator R_PAREN SEMI
+				|
+				PRINT L_PAREN Expr NumbersList R_PAREN SEMI 
+				|
+				L_BRACE StatementsList R_BRACE
+				|
 				/* epsilon */
 				;
+				
+StatementsList ::= StatementsList Statement
+					|
+					/* epsilon */
+					;				
+				
+NumbersList ::= OneNumber
+				|
+				/* epsilon*/
+				;
+				
+OneNumber ::= OneNumber SEMI NUMBER
+				|
+				NUMBER
+				;				
+				
+Return ::= RETURN SEMI
+			|
+			RETURN Expr SEMI
+			;
+				
+ForStatement ::= FOR L_PAREN OptionalDesignatorStatement SEMI OptionalCondition SEMI OptionalDesignatorStatement R_PAREN Statement ;
+				
+OptionalDesignatorStatement ::= DesignatorStatement
+								|
+								/* epsilon */
+								;
+				
+IfStatement ::= IF L_PAREN Condition R_PAREN Statement
+				|
+				IF L_PAREN Condition R_PAREN Statement ELSE Statement
+				;
+
+OptionalCondition ::= Condition
+						|
+						/* epsilon */
+						;
+
+Condition ::= CondTerm CondTermList ;
+
+CondTermList ::= CondTermList OR CondTerm
+					|
+					/* epsilon */
+					;
+					
+CondTerm ::= CondFact CondFactList;
+
+CondFactList ::= CondFactList AND CondFact
+					|
+					/* epsilon */
+					;
+					
+CondFact ::= Expr RelOpExprList ;
+
+RelOpExprList ::= RelOp Expr
+					|
+					/* epsilon */
+					;
+
+RelOp ::= EQUALITY | NOT_EQUAL | GREATER | GREATER_EQUAL | LESS | LESS_EQUAL ;		
 
 DesignatorStatement ::= Designator DesignatorStatementOptions ;
 
@@ -228,12 +308,34 @@ MulOpRight ::= MULTIPLY_EQUALS
 				MODULATE_EQUALS
 				;				
 
-Term ::= TERMSTUB ;
+Term ::= Factor MultiplyFactorList ;
 
+MultiplyFactorList ::= MultiplyFactorList MulOp Factor
+						|
+						/* epsilon */
+						; 
 
+Factor ::= Designator ActParsListOptional
+			|
+			NUMBER
+			|
+			CHAR
+			|
+			BOOL
+			|
+			NEW Type NewArrayType
+			|
+			L_PAREN Expr R_PAREN ;
 
+ActParsListOptional ::= L_PAREN ActParsList R_PAREN
+						|
+						/* epsilon */
+						;
 
-
+NewArrayType ::= L_INDEXER Expr R_INDEXER
+					|
+					/* epsilon */
+					; 
 
 
 
