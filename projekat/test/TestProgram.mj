@@ -1,0 +1,47 @@
+//Test 303
+
+// const 4, class 5, glob  - 6, loc 3
+program test_303
+	
+	class as {
+		{
+			
+			int asdf() 
+			{}
+					
+			static int asdf() 
+			{}
+			
+			static int asdf() 
+			{}
+			
+			int asdf() 
+			{}
+			
+			
+			static int asdf() 
+			{}
+			
+		
+		
+		int asdf() 
+		{}
+		
+		int asdf() 
+		{}
+		
+		int asdf() 
+		{}
+		
+			static int asdf() 
+			{}
+			
+		int asdf() 
+		{}
+		
+		
+	}
+{
+}
+
+

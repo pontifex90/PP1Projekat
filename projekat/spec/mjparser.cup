@@ -5,6 +5,24 @@ import java_cup.runtime.*;
 import org.apache.log4j.*;
 
 parser code {:
+
+	// Counting variables
+	int constantsCount = 0;
+	int globalVarsCount = 0;
+	int globalArrayVarsCount = 0;
+	int classGlobalVarsCount = 0;
+	int mainFunctionVarsCount = 0;
+	int globalFuncCount = 0;
+	int globalStaticFuncCount = 0;
+	int classFuncCount = 0;
+	int classStaticFuncCount = 0;
+	
+	boolean isGlobalContext = true;
+	boolean isClassContext = false;
+	boolean isMethodContext = false;
+	boolean isStaticContext = false;
+	String currentMethodName = "";
+
 	Logger log = Logger.getLogger(getClass());
       
     // slede redefinisani metodi za prijavu gresaka radi izmene teksta poruke
@@ -28,6 +46,44 @@ parser code {:
             msg.append (" na liniji ").append(((Symbol)info).left);
         log.error(msg.toString());
     }
+    
+    // Increments proper var count. Called for every var.
+    public void incrementVarsCount(boolean isArray) {
+    	// Counting variables
+		if(isClassContext) {
+			// Counting only class global variables, not the class method variables.
+			if(!isMethodContext) {
+				classGlobalVarsCount++;
+			}
+		} else if(isGlobalContext) {
+			if(isArray) {
+				globalArrayVarsCount++;
+			} else {
+				globalVarsCount++;
+			}
+		} else {
+			if("main".equals(currentMethodName)) {
+				mainFunctionVarsCount++;
+			}
+		}
+    }
+    
+    // Increments proper methods count. Called for every method.
+    public void incrementMethodsCount() {
+    	if(isStaticContext) {
+    		if(isClassContext) {
+    			classStaticFuncCount++;
+    		} else {
+    			globalStaticFuncCount++;
+    		}
+    	} else {
+    		if(isClassContext) {
+    			classFuncCount++;
+    		} else {
+    			globalFuncCount++;
+    		}
+    	}
+    }
 :}
 
 scan with {:
@@ -46,9 +102,9 @@ terminal String IDENT ;
 terminal Character CHAR ;
 terminal Boolean BOOL ;
 
-non terminal Program, Type, ClassElementsList, MethodsDecl, ClassElement, ConstDecl, VarDecl, ClassDecl ;
-non terminal ConstList, OneConst, VarsList, OneVar, StaticDeclarator, VoidType, FormPars, Statement, FormParsList, ClassExtender ;
-non terminal MethodsSection, MethodsList, InnerClassVarsList, ForStatement, OptionalDesignatorStatement, OptionalCondition ;
+non terminal Program, Type, ProgramElementsList, MethodsDecl, ProgramElement, ConstDecl, VarDecl, ClassDecl ;
+non terminal ConstList, OneConst, VarsElementsList, OneVar, StaticDeclarator, VoidType, FormPars, Statement, FormParsList, ClassExtender ;
+non terminal MethodsSection, MethodsList, VarsList, ForStatement, OptionalDesignatorStatement, OptionalCondition ;
 non terminal DesignatorStatement, Designator, DesignatorStatementOptions, DesignatorOptions, OneDesignatorOption ;
 non terminal Expr, ActParsList, ActPars, Negation, Term, AddTermList, AddOneTerm, Factor, MultiplyFactorList ;
 non terminal AddOp, AssignOp, AddOpRight, AddOpLeft, MulOp, MulOpRight, MulOpLeft, IfStatement, ActParsListOptional ;
@@ -57,25 +113,27 @@ non terminal Return, NumbersList, OneNumber, StatementsList ;
 
 precedence left ELSE;
 
-Program ::= PROG IDENT ClassElementsList L_BRACE MethodsList R_BRACE ;
+Program ::= PROG IDENT ProgramElementsList L_BRACE {: parser.isGlobalContext = false; // Closing global context :} MethodsList R_BRACE ;
 
-ClassElementsList ::= ClassElementsList ClassElement 
+ProgramElementsList ::= ProgramElementsList ProgramElement 
 						|
 						/* epsilon */
 						;
 												
-ClassElement ::= ConstDecl 
+ProgramElement ::= ConstDecl 
 				|
 				VarDecl
 				|
-				ClassDecl
+				{: parser.isClassContext = true; // Starting class context :}
+				ClassDecl 
+				{: parser.isClassContext = false; // Closing class context :}
 				;
 								
 ConstDecl ::= CONST Type ConstList SEMI ;
 
-ConstList ::= ConstList COMMA IDENT EQUALS OneConst 
+ConstList ::= ConstList COMMA IDENT EQUALS OneConst {: parser.constantsCount++; // Counting constants :}
 				|
-				IDENT EQUALS OneConst
+				IDENT EQUALS OneConst {: parser.constantsCount++; // Counting constants :}
 				; 
 
 OneConst ::= NUMBER
@@ -85,43 +143,55 @@ OneConst ::= NUMBER
 			 	BOOL
 				;
  
-VarDecl ::= Type VarsList SEMI ;
+VarDecl ::=	Type VarsElementsList SEMI ;
  
-VarsList ::= VarsList COMMA OneVar
+VarsElementsList ::= VarsElementsList COMMA OneVar
  				|
  				OneVar
  				;
  
-OneVar ::= IDENT 
+OneVar ::= IDENT {: parser.incrementVarsCount(false); :}
  			|
- 			IDENT L_INDEXER R_INDEXER
+ 			IDENT L_INDEXER R_INDEXER {: parser.incrementVarsCount(true); :}
  			;
  
 Type ::= IDENT ;	
  
-ClassDecl ::= CLASS IDENT ClassExtender L_BRACE InnerClassVarsList MethodsSection R_BRACE ; 
+ClassDecl ::= CLASS IDENT ClassExtender L_BRACE VarsList MethodsSection R_BRACE ;
  
 ClassExtender ::= EXTENDS Type 
 					|
 					/* epsilon */
 					;
 
-InnerClassVarsList ::= InnerClassVarsList VarDecl 
+VarsList ::= VarsList VarDecl 
 					|
 					/* epsilon */
 					;
 
-MethodsSection ::= L_BRACE MethodsList R_BRACE ;
+MethodsSection ::= L_BRACE MethodsList R_BRACE 
+					|
+					/* epsilon */
+					;
 
 MethodsList ::= MethodsList MethodsDecl 
 				|
 				/* epsilon */
 				; 
 
-MethodsDecl ::= StaticDeclarator VoidType IDENT L_PAREN FormPars R_PAREN InnerClassVarsList L_BRACE StatementsList R_BRACE ;
+MethodsDecl ::= {: parser.isMethodContext = true; // Starting method context :}
+				StaticDeclarator VoidType IDENT:methodName 
+				{: 
+					parser.currentMethodName = methodName; // Save method name so we can detect main function later
+					parser.incrementMethodsCount();
+				:}
+				L_PAREN FormPars R_PAREN VarsList L_BRACE StatementsList R_BRACE
+				{: parser.isMethodContext = false; // Closing method context :}
+				;
 
-StaticDeclarator ::= STATIC
+StaticDeclarator ::= STATIC {: parser.isStaticContext = true; // Starting static context :}
 						|
+						{: parser.isStaticContext = false; // Closing static context :}
 						/* epsilon */
 						;
 
@@ -334,18 +404,3 @@ NewArrayType ::= L_INDEXER Expr R_INDEXER
 					|
 					/* epsilon */
 					; 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

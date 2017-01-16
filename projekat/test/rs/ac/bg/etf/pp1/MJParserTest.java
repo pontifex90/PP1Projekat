@@ -25,7 +25,7 @@ public class MJParserTest {
 		Reader br = null;
 		try {
 			
-			File sourceCode = new File("test/TestProgramParser.mj");	
+			File sourceCode = new File("test/TestProgram.mj");	
 			log.info("Compiling source file: " + sourceCode.getAbsolutePath());
 
 			br = new BufferedReader(new FileReader(sourceCode));
@@ -33,6 +33,18 @@ public class MJParserTest {
 			
 			MJParser p = new MJParser(lexer);
 	        Symbol s = p.parse();  //pocetak parsiranja
+
+	        log.info("\n===============================\nVARS COUNTING:");
+	        log.info("Constants number: " + p.constantsCount);
+	        log.info("Global vars number: " + p.globalVarsCount);
+	        log.info("Global array vars number: " + p.globalArrayVarsCount);
+	        log.info("Class vars number: " + p.classGlobalVarsCount);
+	        log.info("Main function vars number: " + p.mainFunctionVarsCount + "\n===============================\n");
+	        log.info("\n===============================\nFUNCTION CALLS COUNTING:");
+	        log.info("Global function calls: " + p.globalFuncCount);
+	        log.info("Global static function calls: " + p.globalStaticFuncCount);
+	        log.info("Class function calls: " + p.classFuncCount);
+	        log.info("Class static function calls: " + p.classStaticFuncCount);
 		} 
 		finally {
 			if (br != null) try { br.close(); } catch (IOException e1) { log.error(e1.getMessage(), e1); }
