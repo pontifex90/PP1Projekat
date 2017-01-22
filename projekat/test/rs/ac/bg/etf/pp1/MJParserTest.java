@@ -45,6 +45,11 @@ public class MJParserTest {
 	        log.info("Global static function calls: " + p.globalStaticFuncCount);
 	        log.info("Class function calls: " + p.classFuncCount);
 	        log.info("Class static function calls: " + p.classStaticFuncCount);
+	        log.info("Statements block number: " + p.statementsBlockCount);
+	        log.info("Main method function calls number: " + p.mainMethodFunctionCallsCount);
+	        log.info("Function formal parameters number: " + p.functionFormParsCount);
+	        log.info("Class definitions number: " + p.classDefinitionCount);
+	        
 		} 
 		finally {
 			if (br != null) try { br.close(); } catch (IOException e1) { log.error(e1.getMessage(), e1); }

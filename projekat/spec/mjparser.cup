@@ -6,6 +6,8 @@ import org.apache.log4j.*;
 
 parser code {:
 
+	private static final String MAIN = "main";
+
 	// Counting variables
 	int constantsCount = 0;
 	int globalVarsCount = 0;
@@ -16,6 +18,10 @@ parser code {:
 	int globalStaticFuncCount = 0;
 	int classFuncCount = 0;
 	int classStaticFuncCount = 0;
+	int statementsBlockCount = 0;
+	int mainMethodFunctionCallsCount = 0;
+	int functionFormParsCount = 0;
+	int classDefinitionCount = 0;
 	
 	boolean isGlobalContext = true;
 	boolean isClassContext = false;
@@ -62,7 +68,7 @@ parser code {:
 				globalVarsCount++;
 			}
 		} else {
-			if("main".equals(currentMethodName)) {
+			if(isMainMethod()) {
 				mainFunctionVarsCount++;
 			}
 		}
@@ -83,6 +89,10 @@ parser code {:
     			globalFuncCount++;
     		}
     	}
+    }
+    
+    public boolean isMainMethod() {
+    	return isMethodContext && MAIN.equals(currentMethodName);
     }
 :}
 
@@ -126,7 +136,10 @@ ProgramElement ::= ConstDecl
 				|
 				{: parser.isClassContext = true; // Starting class context :}
 				ClassDecl 
-				{: parser.isClassContext = false; // Closing class context :}
+				{: 
+					parser.isClassContext = false; // Closing class context
+					parser.classDefinitionCount++; 
+				:}
 				;
 								
 ConstDecl ::= CONST Type ConstList SEMI ;
@@ -206,8 +219,10 @@ FormPars ::= FormParsList
 				;
 
 FormParsList ::= FormParsList COMMA Type OneVar
+					{: parser.functionFormParsCount++; :}
 					|
 					Type OneVar
+					{: parser.functionFormParsCount++; :}
 					;
 
 Statement ::= DesignatorStatement SEMI
@@ -227,6 +242,7 @@ Statement ::= DesignatorStatement SEMI
 				PRINT L_PAREN Expr NumbersList R_PAREN SEMI 
 				|
 				L_BRACE StatementsList R_BRACE
+				{: parser.statementsBlockCount++; :}
 				;
 				
 StatementsList ::= StatementsList Statement
@@ -306,6 +322,11 @@ OneDesignatorOption ::= DOT IDENT
 DesignatorStatementOptions ::= AssignOp Expr
 								|
 								L_PAREN ActParsList R_PAREN
+								{: 
+									if(parser.isMainMethod()) {
+										parser.mainMethodFunctionCallsCount++;
+									}
+								:}
 								|
 								INCREMENT
 								|

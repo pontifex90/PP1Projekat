@@ -1,47 +1,42 @@
 //Test 303
 
-// const 4, class 5, glob  - 6, loc 3
+
 program test_303
+	int a, b[];
 	
-	class as {
+	class dasf {
 		{
-			
-			int asdf() 
-			{}
-					
-			static int asdf() 
-			{}
-			
-			static int asdf() 
-			{}
-			
-			int asdf() 
-			{}
-			
-			
-			static int asdf() 
-			{}
-			
+			int a(sgf d) {
+			}
+		}
+	}
 		
+		class dasf {
+		}
 		
-		int asdf() 
-		{}
+		asdf as, asd[];
 		
-		int asdf() 
-		{}
+		class dasf {
+		}
 		
-		int asdf() 
-		{}
-		
-			static int asdf() 
-			{}
-			
-		int asdf() 
-		{}
+{
+	void maas() {
+	 	sbdf();
+	}
+	
+	void main(int a, int g, int sf) {
 		
 		
 	}
-{
+	
+	void amain(){
+	
+	}
+	
+	int sadf(saf s) {
+	
+	}
+	
 }
 
 
