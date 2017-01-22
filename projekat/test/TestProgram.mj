@@ -2,41 +2,14 @@
 
 
 program test_303
-	int a, b[];
-	
-	class dasf {
-		{
-			int a(sgf d) {
-			}
-		}
-	}
-		
-		class dasf {
-		}
-		
-		asdf as, asd[];
-		
-		class dasf {
-		}
-		
+
 {
-	void maas() {
-	 	sbdf();
+	int main(int a, int s)
+	int a, aa;
+	{
+		a[6 a ]++;
+
 	}
-	
-	void main(int a, int g, int sf) {
-		
-		
-	}
-	
-	void amain(){
-	
-	}
-	
-	int sadf(saf s) {
-	
-	}
-	
 }
 
 

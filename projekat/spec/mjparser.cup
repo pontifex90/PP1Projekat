@@ -1,12 +1,22 @@
 package rs.ac.bg.etf.pp1;
 
-
 import java_cup.runtime.*;
 import org.apache.log4j.*;
+import rs.ac.bg.etf.pp1.MJParser.ERROR_CODE;
 
 parser code {:
 
+	public enum ERROR_CODE {
+		VARIABLE,
+		ASSIGN,
+		FORMAL_PARAMETERS,
+		IF,
+		FOR,
+		INDEXING
+	}
+
 	private static final String MAIN = "main";
+	private static final String error_recovery_string = "Error recovery successful: ";
 
 	// Counting variables
 	int constantsCount = 0;
@@ -27,11 +37,11 @@ parser code {:
 	boolean isClassContext = false;
 	boolean isMethodContext = false;
 	boolean isStaticContext = false;
+	boolean isFormalParametersContext = false;
 	String currentMethodName = "";
 
 	Logger log = Logger.getLogger(getClass());
-      
-    // slede redefinisani metodi za prijavu gresaka radi izmene teksta poruke
+     
      
     public void report_fatal_error(String message, Object info) throws java.lang.Exception {
       done_parsing();
@@ -39,22 +49,24 @@ parser code {:
     }
   
     public void syntax_error(Symbol cur_token) {
-        report_error("\nSintaksna greska", cur_token);
+        report_error("\nSyntax error", cur_token);
     }
   
     public void unrecovered_syntax_error(Symbol cur_token) throws java.lang.Exception {
-        report_fatal_error("Fatalna greska, parsiranje se ne moze nastaviti", cur_token);
+        report_fatal_error("Fatal error, parsing is terminated", cur_token);
     }
 
     public void report_error(String message, Object info) {
     	StringBuilder msg = new StringBuilder(message); 
     	if (info instanceof Symbol)
-            msg.append (" na liniji ").append(((Symbol)info).left);
+            msg.append (" on line ").append(((Symbol)info).left).append(", column ").append(((Symbol)info).right);
         log.error(msg.toString());
     }
     
     // Increments proper var count. Called for every var.
     public void incrementVarsCount(boolean isArray) {
+    	if(isFormalParametersContext) { return; }
+    
     	// Counting variables
 		if(isClassContext) {
 			// Counting only class global variables, not the class method variables.
@@ -93,6 +105,42 @@ parser code {:
     
     public boolean isMainMethod() {
     	return isMethodContext && MAIN.equals(currentMethodName);
+    }
+    
+    public void trackErrorRecovery(ERROR_CODE error, String additionalInfo) {
+    	String message = error_recovery_string;
+    	switch (error) {
+    		case VARIABLE:
+    			String context = isGlobalContext ? isClassContext ? "Class" : "Global" : "Local";
+    			message += context + " variable declaration error "; 
+    			break;
+    			
+    		case ASSIGN:
+    			message += "Assign operator error ";
+    			break;
+    			
+    		case FORMAL_PARAMETERS:
+    			message += "Formal parameters declaration error ";
+    			break;	
+    		
+    		case IF:
+    			message += "If statement condition error ";
+    			break;
+    		
+    		case FOR:
+    			message += "For loop condition error ";
+    			break;	
+    		
+    		case INDEXING:
+    			message += "Indexing array error ";
+    			break;
+    			
+    		default:
+    			message += "Unknown syntax error ";
+    			break;
+    	}
+    	
+    	log.debug(message + additionalInfo);
     }
 :}
 
@@ -156,12 +204,22 @@ OneConst ::= NUMBER
 			 	BOOL
 				;
  
-VarDecl ::=	Type VarsElementsList SEMI ;
+VarDecl ::=	Type VarsElementsList SEMI
+			|
+			Type error SEMI
+			{: parser.trackErrorRecovery(ERROR_CODE.VARIABLE, "(3)"); :}				
+			;
  
 VarsElementsList ::= VarsElementsList COMMA OneVar
- 				|
- 				OneVar
- 				;
+ 						|
+ 						error COMMA OneVar
+ 						{: parser.trackErrorRecovery(ERROR_CODE.VARIABLE, "(1)"); :}
+ 						|
+ 						OneVar
+ 						|
+ 						error OneVar
+ 						{: parser.trackErrorRecovery(ERROR_CODE.VARIABLE, "(2)"); :}
+ 						;
  
 OneVar ::= IDENT {: parser.incrementVarsCount(false); :}
  			|
@@ -170,7 +228,7 @@ OneVar ::= IDENT {: parser.incrementVarsCount(false); :}
  
 Type ::= IDENT ;	
  
-ClassDecl ::= CLASS IDENT ClassExtender L_BRACE VarsList MethodsSection R_BRACE ;
+ClassDecl ::= CLASS IDENT ClassExtender L_BRACE VarsList MethodsSection R_BRACE	;
  
 ClassExtender ::= EXTENDS Type 
 					|
@@ -213,9 +271,14 @@ VoidType ::= Type
 				VOID
 				;
 
-FormPars ::= FormParsList
+FormPars ::= {: parser.isFormalParametersContext = true; // Starting form pars context :}
+				FormParsList
+				{: parser.isFormalParametersContext = false; // Starting form pars context :}
 				|
 				/* epsilon */
+				|
+				error
+				{: parser.trackErrorRecovery(ERROR_CODE.FORMAL_PARAMETERS, "(1)"); :}		
 				;
 
 FormParsList ::= FormParsList COMMA Type OneVar
@@ -270,19 +333,31 @@ ForStatement ::= FOR L_PAREN OptionalDesignatorStatement SEMI OptionalCondition 
 OptionalDesignatorStatement ::= DesignatorStatement
 								|
 								/* epsilon */
+								|
+								error
+								{: parser.trackErrorRecovery(ERROR_CODE.FOR, "(1)"); :}
 								;
 				
 IfStatement ::= IF L_PAREN Condition R_PAREN Statement
 				|
+				IF L_PAREN error R_PAREN Statement
+				{: parser.trackErrorRecovery(ERROR_CODE.IF, "(1)"); :}
+				|
 				IF L_PAREN Condition R_PAREN Statement ELSE Statement
+				|
+				IF L_PAREN error R_PAREN Statement ELSE Statement
+				{: parser.trackErrorRecovery(ERROR_CODE.IF, "(2)"); :}
 				;
 
 OptionalCondition ::= Condition
 						|
 						/* epsilon */
+						|
+						error
+						{: parser.trackErrorRecovery(ERROR_CODE.FOR, "(2)"); :}
 						;
 
-Condition ::= CondTerm CondTermList ;
+Condition ::= CondTerm CondTermList	;
 
 CondTermList ::= CondTermList OR CondTerm
 					|
@@ -317,9 +392,15 @@ DesignatorOptions ::= DesignatorOptions OneDesignatorOption
 OneDesignatorOption ::= DOT IDENT
 						|
 						L_INDEXER Expr R_INDEXER
+						|
+						L_INDEXER error R_INDEXER
+						{: parser.trackErrorRecovery(ERROR_CODE.INDEXING, "(1)"); :}
 						;
 						
 DesignatorStatementOptions ::= AssignOp Expr
+								|
+								AssignOp error
+								{: parser.trackErrorRecovery(ERROR_CODE.ASSIGN, "(1)"); :}
 								|
 								L_PAREN ActParsList R_PAREN
 								{: 
