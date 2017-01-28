@@ -12,7 +12,9 @@ parser code {:
 		FORMAL_PARAMETERS,
 		IF,
 		FOR,
-		INDEXING
+		INDEXING,
+		EXTENDS,
+		PARAMETERS
 	}
 
 	private static final String MAIN = "main";
@@ -135,6 +137,14 @@ parser code {:
     			message += "Indexing array error ";
     			break;
     			
+    		case EXTENDS:
+    			message += "Extends clause error ";
+    			break;
+    			
+    		case PARAMETERS:
+    			message += "Parameters list error ";
+    			break;
+    		    			
     		default:
     			message += "Unknown syntax error ";
     			break;
@@ -231,6 +241,9 @@ Type ::= IDENT ;
 ClassDecl ::= CLASS IDENT ClassExtender L_BRACE VarsList MethodsSection R_BRACE	;
  
 ClassExtender ::= EXTENDS Type 
+					|
+					error
+					{: parser.trackErrorRecovery(ERROR_CODE.EXTENDS, "(1)"); :}
 					|
 					/* epsilon */
 					;
@@ -415,6 +428,9 @@ DesignatorStatementOptions ::= AssignOp Expr
 								;
 				
 ActParsList ::= ActPars
+				|
+				error
+				{: parser.trackErrorRecovery(ERROR_CODE.PARAMETERS, "(1)"); :}
 				|
 				/* epsilon */
 				;
