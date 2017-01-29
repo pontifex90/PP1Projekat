@@ -2,13 +2,10 @@
 
 
 program test_303
-
+const int x = 210, d = 23;
 {
-	int main(int a, int s)
-	int a, aa;
-	{
-		a[6 a ]++;
-
+	int main() {
+	
 	}
 }
 

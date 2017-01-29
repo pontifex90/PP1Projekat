@@ -3,6 +3,9 @@ package rs.ac.bg.etf.pp1;
 import java_cup.runtime.*;
 import org.apache.log4j.*;
 import rs.ac.bg.etf.pp1.MJParser.ERROR_CODE;
+import rs.etf.pp1.symboltable.Tab;
+import rs.etf.pp1.symboltable.concepts.*;
+import rs.etf.pp1.symboltable.visitors.DumpSymbolTableVisitor;
 
 parser code {:
 
@@ -41,28 +44,47 @@ parser code {:
 	boolean isStaticContext = false;
 	boolean isFormalParametersContext = false;
 	String currentMethodName = "";
-
+	
 	Logger log = Logger.getLogger(getClass());
      
-     
-    public void report_fatal_error(String message, Object info) throws java.lang.Exception {
-      done_parsing();
-      report_error(message, info);
-    }
-  
-    public void syntax_error(Symbol cur_token) {
-        report_error("\nSyntax error", cur_token);
-    }
-  
-    public void unrecovered_syntax_error(Symbol cur_token) throws java.lang.Exception {
+	public void unrecovered_syntax_error(Symbol cur_token) throws java.lang.Exception {
         report_fatal_error("Fatal error, parsing is terminated", cur_token);
     }
 
-    public void report_error(String message, Object info) {
+	public void report_fatal_error(String message, Object info) throws java.lang.Exception {
+      done_parsing();
+      report(message, info, true);
+    }
+  
+    public void syntax_error(Symbol cur_token) {
+        report("Syntax error", cur_token, true);
+    }
+  	
+  	public void semantic_error(String message, int line) {
+        report("Semantic error on line " + line + ": " + message, null, true);
+    }
+  
+  	public void semantic_info(String message, int line) {
+		report("Semantic info on line " + line + ": " + message, null, false);
+	}
+	
+	public void log_symbol_detected(Obj object, String message, int line) {
+		DumpSymbolTableVisitor visitor = new DumpSymbolTableVisitor();
+        visitor.visitObjNode(object);
+        
+        semantic_info(message + " [ " + visitor.getOutput() + "]", line);
+	}
+	
+    public void report(String message, Object info, boolean isError) {
     	StringBuilder msg = new StringBuilder(message); 
     	if (info instanceof Symbol)
             msg.append (" on line ").append(((Symbol)info).left).append(", column ").append(((Symbol)info).right);
-        log.error(msg.toString());
+        
+        if(isError) {
+        	log.error(msg.toString());
+        } else {
+        	log.info(msg.toString());
+        }
     }
     
     // Increments proper var count. Called for every var.
@@ -161,6 +183,50 @@ scan with {:
 	return s;
 :}
 
+init with {:
+	Tab.init();
+	Tab.currentScope.addToLocals(new Obj(Obj.Type, "bool", CUP$MJParser$actions.boolType));
+:}
+
+action code {:
+		public static final Struct boolType = new Struct(Struct.Bool);
+		
+	Struct currentType = Tab.noType;
+	
+	// Semantic methods
+    public boolean doesSymbolAlreadyExists(String name, int line) {
+    	boolean doesSymbolExist = Tab.currentScope.findSymbol(name) != null;
+    	if(doesSymbolExist) {
+			parser.semantic_error("identificator with name \"" + name + "\" already exists.", line);
+		}
+		return doesSymbolExist;
+    }
+    
+    public boolean doesTypeMatchWithCurrent(Struct type, int line) {
+    	boolean doesTypeMatch = type == currentType;
+    	if(!doesTypeMatch) {
+    		parser.semantic_error("type mismatch.", line);
+		}
+		return doesTypeMatch;
+    }
+    
+	public void AddConstantToSymbolTable(String constName, Obj currentConstObject, int line) {
+		Struct currentConstType = currentConstObject.getType();
+		
+		if(currentConstType == Tab.noType) {
+			// Failsafe
+			parser.semantic_error("Constant \"" + constName + "\" doesn't have a type defined.", line);
+		} else if(!doesSymbolAlreadyExists(constName, line)){
+			// Symbol doesn't exist, check if type is correct.
+			if(doesTypeMatchWithCurrent(currentConstType, line)) {
+				Tab.insert(Obj.Con, constName, currentConstType);
+				// Create object node string.
+				parser.log_symbol_detected(currentConstObject, "added constant \"" + constName + "\" to symbol table.", line);
+			}
+		}
+	}
+:}
+
 terminal PROG, CLASS, CONST, EQUALS, L_BRACE, R_BRACE, L_PAREN, R_PAREN, SEMI, COMMA, L_INDEXER, R_INDEXER ;
 terminal EXTENDS, STATIC, VOID, DOT, INCREMENT, DECREMENT, NEW, FOR, PRINT, READ, CONTINUE, BREAK, RETURN ;
 terminal PLUS, MINUS, PLUS_EQUALS, MINUS_EQUALS, MULTIPLY, DIVIDE, MODULATE, MULTIPLY_EQUALS, DIVIDE_EQUALS, MODULATE_EQUALS ;
@@ -170,8 +236,8 @@ terminal String IDENT ;
 terminal Character CHAR ;
 terminal Boolean BOOL ;
 
-non terminal Program, Type, ProgramElementsList, MethodsDecl, ProgramElement, ConstDecl, VarDecl, ClassDecl ;
-non terminal ConstList, OneConst, VarsElementsList, OneVar, StaticDeclarator, VoidType, FormPars, Statement, FormParsList, ClassExtender ;
+non terminal Program, ProgramElementsList, MethodsDecl, ProgramElement, ConstDecl, VarDecl, ClassDecl ;
+non terminal ConstList, VarsElementsList, OneVar, StaticDeclarator, VoidType, FormPars, Statement, FormParsList, ClassExtender ;
 non terminal MethodsSection, MethodsList, VarsList, ForStatement, OptionalDesignatorStatement, OptionalCondition ;
 non terminal DesignatorStatement, Designator, DesignatorStatementOptions, DesignatorOptions, OneDesignatorOption ;
 non terminal Expr, ActParsList, ActPars, Negation, Term, AddTermList, AddOneTerm, Factor, MultiplyFactorList ;
@@ -179,9 +245,24 @@ non terminal AddOp, AssignOp, AddOpRight, AddOpLeft, MulOp, MulOpRight, MulOpLef
 non terminal Condition, CondTerm, CondTermList, CondFact, CondFactList, RelOp, RelOpExprList, NewArrayType ; 
 non terminal Return, NumbersList, OneNumber, StatementsList ;
 
+non terminal Obj ProgName, OneConst ;
+non terminal Struct Type ;
+
 precedence left ELSE;
 
-Program ::= PROG IDENT ProgramElementsList L_BRACE {: parser.isGlobalContext = false; // Closing global context :} MethodsList R_BRACE ;
+Program ::= PROG ProgName:p ProgramElementsList L_BRACE {: parser.isGlobalContext = false; // Closing global context :} MethodsList R_BRACE 
+			{:
+				Tab.chainLocalSymbols(p);
+				Tab.closeScope(); 
+			:}
+			;
+
+ProgName ::= IDENT:programName 
+			{: 
+				RESULT = Tab.insert(Obj.Prog, programName, Tab.noType);
+				Tab.openScope();  
+			:}
+			;
 
 ProgramElementsList ::= ProgramElementsList ProgramElement 
 						|
@@ -200,18 +281,40 @@ ProgramElement ::= ConstDecl
 				:}
 				;
 								
-ConstDecl ::= CONST Type ConstList SEMI ;
+ConstDecl ::= CONST Type:constType {: currentType = constType; :} ConstList SEMI 
+				{: currentType = Tab.noType; :}
+				;
 
-ConstList ::= ConstList COMMA IDENT EQUALS OneConst {: parser.constantsCount++; // Counting constants :}
+ConstList ::= ConstList COMMA IDENT:constName EQUALS OneConst:currentConstObject
+				{: 
+					parser.constantsCount++; // Counting constants
+					AddConstantToSymbolTable(constName, currentConstObject, currentConstObjectleft); 
+				:}
 				|
-				IDENT EQUALS OneConst {: parser.constantsCount++; // Counting constants :}
+				IDENT:constName EQUALS OneConst:currentConstObject
+				{: 
+					parser.constantsCount++; // Counting constants
+					AddConstantToSymbolTable(constName, currentConstObject, currentConstObjectleft);
+				:}
 				; 
 
-OneConst ::= NUMBER
+OneConst ::= NUMBER:value
+				{:
+					RESULT = new Obj(Obj.Con, "", Tab.intType);  
+ 	    			RESULT.setAdr((int)value);
+ 	    		:} 
 				|
-			 	CHAR
+			 	CHAR:value
+			 	{:
+					RESULT = new Obj(Obj.Con, "", Tab.charType);  
+		 	    	RESULT.setAdr(value);
+				:}
 				|
-			 	BOOL
+			 	BOOL:value
+			 	{:
+					RESULT = new Obj(Obj.Con, "", boolType);  
+		 	    	RESULT.setAdr(value ? 1:0);
+				:}
 				;
  
 VarDecl ::=	Type VarsElementsList SEMI
@@ -236,7 +339,24 @@ OneVar ::= IDENT {: parser.incrementVarsCount(false); :}
  			IDENT L_INDEXER R_INDEXER {: parser.incrementVarsCount(true); :}
  			;
  
-Type ::= IDENT ;	
+Type ::= IDENT:typeName
+			{: 
+				Obj typeNode = Tab.find(typeName);
+				if (typeNode == Tab.noObj) {
+					parser.semantic_error("type \"" + typeName + "\" not found in symbol table.", typeNameleft);
+					RESULT = Tab.noType;
+				}
+				else {
+					if (Obj.Type == typeNode.getKind()) {
+						RESULT = typeNode.getType();
+					}
+					else {
+						parser.semantic_error("\"" + typeName + "\" is not a type.", typeNameleft);
+						RESULT = Tab.noType;
+					}
+				}
+			:}
+			;	
  
 ClassDecl ::= CLASS IDENT ClassExtender L_BRACE VarsList MethodsSection R_BRACE	;
  

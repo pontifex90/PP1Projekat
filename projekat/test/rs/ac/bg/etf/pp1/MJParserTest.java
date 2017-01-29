@@ -12,6 +12,7 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.xml.DOMConfigurator;
 
 import rs.ac.bg.etf.pp1.util.Log4JUtils;
+import rs.etf.pp1.symboltable.Tab;
 
 public class MJParserTest {
 
@@ -33,22 +34,24 @@ public class MJParserTest {
 			
 			MJParser p = new MJParser(lexer);
 	        Symbol s = p.parse();  //pocetak parsiranja
-
-	        log.info("\n===============================\nVARS COUNTING:");
-	        log.info("Constants number: " + p.constantsCount);
-	        log.info("Global vars number: " + p.globalVarsCount);
-	        log.info("Global array vars number: " + p.globalArrayVarsCount);
-	        log.info("Class vars number: " + p.classGlobalVarsCount);
-	        log.info("Main function vars number: " + p.mainFunctionVarsCount + "\n===============================\n");
-	        log.info("\n===============================\nFUNCTION CALLS COUNTING:");
-	        log.info("Global function calls: " + p.globalFuncCount);
-	        log.info("Global static function calls: " + p.globalStaticFuncCount);
-	        log.info("Class function calls: " + p.classFuncCount);
-	        log.info("Class static function calls: " + p.classStaticFuncCount);
-	        log.info("Statements block number: " + p.statementsBlockCount);
-	        log.info("Main method function calls number: " + p.mainMethodFunctionCallsCount);
-	        log.info("Function formal parameters number: " + p.functionFormParsCount);
-	        log.info("Class definitions number: " + p.classDefinitionCount);
+	        
+	        Tab.dump();
+	        
+//	        log.info("\n===============================\nVARS COUNTING:");
+//	        log.info("Constants number: " + p.constantsCount);
+//	        log.info("Global vars number: " + p.globalVarsCount);
+//	        log.info("Global array vars number: " + p.globalArrayVarsCount);
+//	        log.info("Class vars number: " + p.classGlobalVarsCount);
+//	        log.info("Main function vars number: " + p.mainFunctionVarsCount + "\n===============================\n");
+//	        log.info("\n===============================\nFUNCTION CALLS COUNTING:");
+//	        log.info("Global function calls: " + p.globalFuncCount);
+//	        log.info("Global static function calls: " + p.globalStaticFuncCount);
+//	        log.info("Class function calls: " + p.classFuncCount);
+//	        log.info("Class static function calls: " + p.classStaticFuncCount);
+//	        log.info("Statements block number: " + p.statementsBlockCount);
+//	        log.info("Main method function calls number: " + p.mainMethodFunctionCallsCount);
+//	        log.info("Function formal parameters number: " + p.functionFormParsCount);
+//	        log.info("Class definitions number: " + p.classDefinitionCount);
 	        
 		} 
 		finally {
