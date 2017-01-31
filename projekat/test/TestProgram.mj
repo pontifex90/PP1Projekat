@@ -2,9 +2,21 @@
 
 
 program test_303
-const int x = 210, d = 23;
+
+int a;
+
+class gad {
+	int a;
+}
+
+class AsdF {
+	int a;
+}
+
 {
-	int main() {
+	void main()
+	int a;
+	{
 	
 	}
 }

@@ -3,6 +3,7 @@ package rs.ac.bg.etf.pp1;
 import java_cup.runtime.*;
 import org.apache.log4j.*;
 import rs.ac.bg.etf.pp1.MJParser.ERROR_CODE;
+import rs.ac.bg.etf.pp1.MJParser.SYMBOL_TYPE;
 import rs.etf.pp1.symboltable.Tab;
 import rs.etf.pp1.symboltable.concepts.*;
 import rs.etf.pp1.symboltable.visitors.DumpSymbolTableVisitor;
@@ -19,7 +20,21 @@ parser code {:
 		EXTENDS,
 		PARAMETERS
 	}
+	
+	public enum LOG_TYPE {
+		DEBUG,
+		INFO,
+		ERROR
+	}
 
+	public enum SYMBOL_TYPE {
+		CONSTANT,
+		VARIABLE,
+		METHOD,
+		PROGRAM,
+		CLASS_TYPE
+	}
+	
 	private static final String MAIN = "main";
 	private static final String error_recovery_string = "Error recovery successful: ";
 
@@ -44,6 +59,7 @@ parser code {:
 	boolean isStaticContext = false;
 	boolean isFormalParametersContext = false;
 	String currentMethodName = "";
+	Struct currentClassType = Tab.noType;
 	
 	Logger log = Logger.getLogger(getClass());
      
@@ -53,38 +69,47 @@ parser code {:
 
 	public void report_fatal_error(String message, Object info) throws java.lang.Exception {
       done_parsing();
-      report(message, info, true);
+      report(message, info, LOG_TYPE.ERROR);
     }
   
     public void syntax_error(Symbol cur_token) {
-        report("Syntax error", cur_token, true);
+        report("Syntax error", cur_token, LOG_TYPE.ERROR);
     }
   	
   	public void semantic_error(String message, int line) {
-        report("Semantic error on line " + line + ": " + message, null, true);
+        report("Semantic error on line " + line + ": " + message, null, LOG_TYPE.ERROR);
     }
   
   	public void semantic_info(String message, int line) {
-		report("Semantic info on line " + line + ": " + message, null, false);
+		report("Semantic info on line " + line + ": " + message, null, LOG_TYPE.DEBUG);
 	}
 	
 	public void log_symbol_detected(Obj object, String message, int line) {
 		DumpSymbolTableVisitor visitor = new DumpSymbolTableVisitor();
-        visitor.visitObjNode(object);
+		visitor.visitObjNode(object);
         
-        semantic_info(message + " [ " + visitor.getOutput() + "]", line);
+ 		semantic_info(message + " [ " + visitor.getOutput() + "]", line);
 	}
 	
-    public void report(String message, Object info, boolean isError) {
+    public void report(String message, Object info, LOG_TYPE logType) {
     	StringBuilder msg = new StringBuilder(message); 
-    	if (info instanceof Symbol)
-            msg.append (" on line ").append(((Symbol)info).left).append(", column ").append(((Symbol)info).right);
-        
-        if(isError) {
-        	log.error(msg.toString());
-        } else {
-        	log.info(msg.toString());
+    	if (info instanceof Symbol) {
+			msg.append (" on line ").append(((Symbol)info).left).append(", column ").append(((Symbol)info).right);
         }
+
+		switch(logType) {
+			case DEBUG:
+		    	log.debug(msg.toString());
+		    	break;
+		    	
+			case INFO:
+		    	log.info(msg.toString());
+		    	break;
+		    	
+			case ERROR:
+		    	log.error(msg.toString());
+		    	break;
+		 }
     }
     
     // Increments proper var count. Called for every var.
@@ -131,7 +156,7 @@ parser code {:
     	return isMethodContext && MAIN.equals(currentMethodName);
     }
     
-    public void trackErrorRecovery(ERROR_CODE error, String additionalInfo) {
+    public void trackSyntaxErrorRecovery(ERROR_CODE error, String additionalInfo) {
     	String message = error_recovery_string;
     	switch (error) {
     		case VARIABLE:
@@ -189,12 +214,13 @@ init with {:
 :}
 
 action code {:
-		public static final Struct boolType = new Struct(Struct.Bool);
+	public static final Struct boolType = new Struct(Struct.Bool);
 		
 	Struct currentType = Tab.noType;
+	boolean isVoidMethod = false;
 	
 	// Semantic methods
-    public boolean doesSymbolAlreadyExists(String name, int line) {
+    private boolean doesSymbolAlreadyExist(String name, int line) {
     	boolean doesSymbolExist = Tab.currentScope.findSymbol(name) != null;
     	if(doesSymbolExist) {
 			parser.semantic_error("identificator with name \"" + name + "\" already exists.", line);
@@ -202,7 +228,7 @@ action code {:
 		return doesSymbolExist;
     }
     
-    public boolean doesTypeMatchWithCurrent(Struct type, int line) {
+    private boolean doesTypeMatchWithCurrent(Struct type, int line) {
     	boolean doesTypeMatch = type == currentType;
     	if(!doesTypeMatch) {
     		parser.semantic_error("type mismatch.", line);
@@ -210,20 +236,110 @@ action code {:
 		return doesTypeMatch;
     }
     
-	public void AddConstantToSymbolTable(String constName, Obj currentConstObject, int line) {
-		Struct currentConstType = currentConstObject.getType();
-		
-		if(currentConstType == Tab.noType) {
-			// Failsafe
-			parser.semantic_error("Constant \"" + constName + "\" doesn't have a type defined.", line);
-		} else if(!doesSymbolAlreadyExists(constName, line)){
+    private void isClassExtensionValid(Struct parentClassType, int line) {
+		// Check if class tries to extend itself.
+		if(parentClassType == parser.currentClassType && parentClassType != Tab.noType) {
+			parser.semantic_error("class tried to extend itself.", line);
+		} 
+		// Check if class tried to extend primitive or non-existing type.
+		else if(parentClassType.getKind() != Struct.Class) {
+			parser.semantic_error("class tried to extend primitive or non-existing type.", line);
+		}
+    }
+    
+	private Obj addConstantToSymbolTable(String name, Struct currentObjectType, Obj currentObject, int line) {
+		if(currentObjectType == null || currentObjectType == Tab.noType) {
+			// Failsafe.
+			parser.semantic_error("Constant \"" + name + "\" doesn't have a type defined.", line);
+		} else if(!doesSymbolAlreadyExist(name, line)){
 			// Symbol doesn't exist, check if type is correct.
-			if(doesTypeMatchWithCurrent(currentConstType, line)) {
-				Tab.insert(Obj.Con, constName, currentConstType);
-				// Create object node string.
-				parser.log_symbol_detected(currentConstObject, "added constant \"" + constName + "\" to symbol table.", line);
+			if(doesTypeMatchWithCurrent(currentObjectType, line)) {
+				// Do the insertion.
+				Obj createdObject = insertToTable(SYMBOL_TYPE.CONSTANT, name, currentObjectType, line);
+				// Copy value.
+				createdObject.setAdr(currentObject.getAdr());
+				
+				return createdObject;
 			}
 		}
+		
+		return null;
+	}
+		
+	private Obj addVariableToSymbolTable(String name, int line) {
+		if(parser.isFormalParametersContext) { return null; }
+		
+		if(!doesSymbolAlreadyExist(name, line)){
+			// Symbol doesn't exist, do the insertion.
+			return insertToTable(SYMBOL_TYPE.VARIABLE, name, currentType, line);
+		}
+		
+		return null;
+	}
+	
+	private Obj addMethodToSymbolTable(String name, int line) {
+		// If it's a main method check if it is void. 
+		if(parser.isMainMethod() && !isVoidMethod) {
+			parser.semantic_error("main method must have void as a return type.", line);
+		}
+		Struct methodType = isVoidMethod ? Tab.noType : currentType;
+		
+		return insertToTable(SYMBOL_TYPE.METHOD, name, methodType, line);
+	}
+	
+	private Obj addProgramToSymbolTable(String name, int line) {
+		return insertToTable(SYMBOL_TYPE.PROGRAM, name, Tab.noType, line);
+	}
+	
+	private Obj addClassTypeToSymbolTable(String name, int line) {
+		return insertToTable(SYMBOL_TYPE.CLASS_TYPE, name, new Struct(Struct.Class), line);
+	}
+	
+	private Obj insertToTable(SYMBOL_TYPE symbolType, String name, Struct currentObjectType, int line) {
+		int objectType;
+		String message;
+		
+		switch (symbolType) {
+			case CONSTANT:
+				objectType = Obj.Con;
+				message = "added constant \"" + name + "\" to symbol table.";
+				break;
+				
+			case VARIABLE:
+				objectType = Obj.Var;
+				String context = parser.isGlobalContext ? parser.isClassContext ? "class" : "global" : "local";
+				message = "added " + context + " variable \"" + name + "\" to symbol table.";
+				break;
+				
+			case METHOD:
+				objectType = Obj.Meth;
+				message = "added method \"" + name + "\" to symbol table.";
+				break;
+				
+			case PROGRAM:
+				objectType = Obj.Prog;
+				message = "added program \"" + name + "\" to symbol table.";
+				break;
+				
+			case CLASS_TYPE:
+				objectType = Obj.Type;
+				message = "added class type \"" + name + "\" to symbol table.";
+				break;
+				
+			default:
+				objectType = Obj.NO_VALUE;
+				message = "UNKNOWN SYMBOL TYPE";
+				parser.semantic_error(message, line);
+				break;
+		}
+		
+		// Insert object to table.
+		Obj createdObject = Tab.insert(objectType, name, currentObjectType);
+				
+		// Create object node string.
+		parser.log_symbol_detected(createdObject, message, line);
+		
+		return createdObject;
 	}
 :}
 
@@ -243,25 +359,24 @@ non terminal DesignatorStatement, Designator, DesignatorStatementOptions, Design
 non terminal Expr, ActParsList, ActPars, Negation, Term, AddTermList, AddOneTerm, Factor, MultiplyFactorList ;
 non terminal AddOp, AssignOp, AddOpRight, AddOpLeft, MulOp, MulOpRight, MulOpLeft, IfStatement, ActParsListOptional ;
 non terminal Condition, CondTerm, CondTermList, CondFact, CondFactList, RelOp, RelOpExprList, NewArrayType ; 
-non terminal Return, NumbersList, OneNumber, StatementsList ;
+non terminal Return, NumbersList, OneNumber, StatementsList, OpenScope, CloseScope ;
 
-non terminal Obj ProgName, OneConst ;
+non terminal Obj ProgName, OneConst, MethodName, ClassName ;
 non terminal Struct Type ;
 
 precedence left ELSE;
 
-Program ::= PROG ProgName:p ProgramElementsList L_BRACE {: parser.isGlobalContext = false; // Closing global context :} MethodsList R_BRACE 
-			{:
-				Tab.chainLocalSymbols(p);
-				Tab.closeScope(); 
-			:}
+start with Program;
+
+OpenScope ::= {: Tab.openScope(); :} ;
+CloseScope ::= {: Tab.closeScope(); :} ;
+
+Program ::= PROG ProgName:p OpenScope ProgramElementsList L_BRACE {: parser.isGlobalContext = false; // Closing global context :} MethodsList 
+			R_BRACE {: Tab.chainLocalSymbols(p); :} CloseScope
 			;
 
 ProgName ::= IDENT:programName 
-			{: 
-				RESULT = Tab.insert(Obj.Prog, programName, Tab.noType);
-				Tab.openScope();  
-			:}
+			{: RESULT = addProgramToSymbolTable(programName, programNameleft); :}
 			;
 
 ProgramElementsList ::= ProgramElementsList ProgramElement 
@@ -281,20 +396,18 @@ ProgramElement ::= ConstDecl
 				:}
 				;
 								
-ConstDecl ::= CONST Type:constType {: currentType = constType; :} ConstList SEMI 
-				{: currentType = Tab.noType; :}
-				;
+ConstDecl ::= CONST Type ConstList SEMI ;
 
 ConstList ::= ConstList COMMA IDENT:constName EQUALS OneConst:currentConstObject
 				{: 
 					parser.constantsCount++; // Counting constants
-					AddConstantToSymbolTable(constName, currentConstObject, currentConstObjectleft); 
+					addConstantToSymbolTable(constName, currentConstObject.getType(), currentConstObject, currentConstObjectleft); 
 				:}
 				|
 				IDENT:constName EQUALS OneConst:currentConstObject
 				{: 
 					parser.constantsCount++; // Counting constants
-					AddConstantToSymbolTable(constName, currentConstObject, currentConstObjectleft);
+					addConstantToSymbolTable(constName, currentConstObject.getType(), currentConstObject, currentConstObjectleft);
 				:}
 				; 
 
@@ -317,26 +430,35 @@ OneConst ::= NUMBER:value
 				:}
 				;
  
-VarDecl ::=	Type VarsElementsList SEMI
+VarDecl ::=	Type:varType VarsElementsList SEMI
+			
 			|
 			Type error SEMI
-			{: parser.trackErrorRecovery(ERROR_CODE.VARIABLE, "(3)"); :}				
+			{: parser.trackSyntaxErrorRecovery(ERROR_CODE.VARIABLE, "(3)"); :}				
 			;
  
 VarsElementsList ::= VarsElementsList COMMA OneVar
  						|
  						error COMMA OneVar
- 						{: parser.trackErrorRecovery(ERROR_CODE.VARIABLE, "(1)"); :}
+ 						{: parser.trackSyntaxErrorRecovery(ERROR_CODE.VARIABLE, "(1)"); :}
  						|
  						OneVar
  						|
  						error OneVar
- 						{: parser.trackErrorRecovery(ERROR_CODE.VARIABLE, "(2)"); :}
+ 						{: parser.trackSyntaxErrorRecovery(ERROR_CODE.VARIABLE, "(2)"); :}
  						;
  
-OneVar ::= IDENT {: parser.incrementVarsCount(false); :}
+OneVar ::= IDENT:varName
+			{: 
+				parser.incrementVarsCount(false); 
+				addVariableToSymbolTable(varName, varNameleft);
+			:}
  			|
- 			IDENT L_INDEXER R_INDEXER {: parser.incrementVarsCount(true); :}
+ 			IDENT:varName L_INDEXER R_INDEXER 
+ 			{: 
+ 				parser.incrementVarsCount(true);
+ 				addVariableToSymbolTable(varName, varNameleft); 
+ 			:}
  			;
  
 Type ::= IDENT:typeName
@@ -345,25 +467,43 @@ Type ::= IDENT:typeName
 				if (typeNode == Tab.noObj) {
 					parser.semantic_error("type \"" + typeName + "\" not found in symbol table.", typeNameleft);
 					RESULT = Tab.noType;
+					currentType = Tab.noType;
 				}
 				else {
 					if (Obj.Type == typeNode.getKind()) {
 						RESULT = typeNode.getType();
+						currentType = typeNode.getType();
 					}
 					else {
 						parser.semantic_error("\"" + typeName + "\" is not a type.", typeNameleft);
 						RESULT = Tab.noType;
+						currentType = Tab.noType;
 					}
 				}
 			:}
 			;	
  
-ClassDecl ::= CLASS IDENT ClassExtender L_BRACE VarsList MethodsSection R_BRACE	;
- 
-ClassExtender ::= EXTENDS Type 
+ClassDecl ::= CLASS ClassName:c OpenScope ClassExtender L_BRACE VarsList MethodsSection R_BRACE
+				{: 
+					parser.currentClassType = Tab.noType;
+					Tab.chainLocalSymbols(c);
+				:}
+				CloseScope
+				;
+
+ClassName ::= IDENT:className 
+				{: 
+					Obj classSymbol = addClassTypeToSymbolTable(className, classNameleft); 
+					parser.currentClassType = classSymbol.getType();		
+					RESULT = classSymbol;
+				:}
+				;
+
+ClassExtender ::= EXTENDS Type:parentClassType
+					{: isClassExtensionValid(parentClassType, parentClassTypeleft); :} 
 					|
 					error
-					{: parser.trackErrorRecovery(ERROR_CODE.EXTENDS, "(1)"); :}
+					{: parser.trackSyntaxErrorRecovery(ERROR_CODE.EXTENDS, "(1)"); :}
 					|
 					/* epsilon */
 					;
@@ -384,13 +524,20 @@ MethodsList ::= MethodsList MethodsDecl
 				; 
 
 MethodsDecl ::= {: parser.isMethodContext = true; // Starting method context :}
-				StaticDeclarator VoidType IDENT:methodName 
+				StaticDeclarator VoidType MethodName:m OpenScope L_PAREN FormPars R_PAREN VarsList L_BRACE StatementsList R_BRACE 
 				{: 
-					parser.currentMethodName = methodName; // Save method name so we can detect main function later
 					parser.incrementMethodsCount();
+					parser.isMethodContext = false; // Closing method context
+					Tab.chainLocalSymbols(m); 
 				:}
-				L_PAREN FormPars R_PAREN VarsList L_BRACE StatementsList R_BRACE
-				{: parser.isMethodContext = false; // Closing method context :}
+				CloseScope
+				;
+
+MethodName ::= IDENT:methodName
+				{:
+					parser.currentMethodName = methodName; // Save method name so we can detect main function later
+					RESULT = addMethodToSymbolTable(methodName, methodNameleft);
+				:}
 				;
 
 StaticDeclarator ::= STATIC {: parser.isStaticContext = true; // Starting static context :}
@@ -400,8 +547,10 @@ StaticDeclarator ::= STATIC {: parser.isStaticContext = true; // Starting static
 						;
 
 VoidType ::= Type
+				{: isVoidMethod = false; :}
 				|
 				VOID
+				{: isVoidMethod = true; :}
 				;
 
 FormPars ::= {: parser.isFormalParametersContext = true; // Starting form pars context :}
@@ -411,7 +560,7 @@ FormPars ::= {: parser.isFormalParametersContext = true; // Starting form pars c
 				/* epsilon */
 				|
 				error
-				{: parser.trackErrorRecovery(ERROR_CODE.FORMAL_PARAMETERS, "(1)"); :}		
+				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.FORMAL_PARAMETERS, "(1)"); :}		
 				;
 
 FormParsList ::= FormParsList COMMA Type OneVar
@@ -468,18 +617,18 @@ OptionalDesignatorStatement ::= DesignatorStatement
 								/* epsilon */
 								|
 								error
-								{: parser.trackErrorRecovery(ERROR_CODE.FOR, "(1)"); :}
+								{: parser.trackSyntaxErrorRecovery(ERROR_CODE.FOR, "(1)"); :}
 								;
 				
 IfStatement ::= IF L_PAREN Condition R_PAREN Statement
 				|
 				IF L_PAREN error R_PAREN Statement
-				{: parser.trackErrorRecovery(ERROR_CODE.IF, "(1)"); :}
+				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.IF, "(1)"); :}
 				|
 				IF L_PAREN Condition R_PAREN Statement ELSE Statement
 				|
 				IF L_PAREN error R_PAREN Statement ELSE Statement
-				{: parser.trackErrorRecovery(ERROR_CODE.IF, "(2)"); :}
+				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.IF, "(2)"); :}
 				;
 
 OptionalCondition ::= Condition
@@ -487,7 +636,7 @@ OptionalCondition ::= Condition
 						/* epsilon */
 						|
 						error
-						{: parser.trackErrorRecovery(ERROR_CODE.FOR, "(2)"); :}
+						{: parser.trackSyntaxErrorRecovery(ERROR_CODE.FOR, "(2)"); :}
 						;
 
 Condition ::= CondTerm CondTermList	;
@@ -527,13 +676,13 @@ OneDesignatorOption ::= DOT IDENT
 						L_INDEXER Expr R_INDEXER
 						|
 						L_INDEXER error R_INDEXER
-						{: parser.trackErrorRecovery(ERROR_CODE.INDEXING, "(1)"); :}
+						{: parser.trackSyntaxErrorRecovery(ERROR_CODE.INDEXING, "(1)"); :}
 						;
 						
 DesignatorStatementOptions ::= AssignOp Expr
 								|
 								AssignOp error
-								{: parser.trackErrorRecovery(ERROR_CODE.ASSIGN, "(1)"); :}
+								{: parser.trackSyntaxErrorRecovery(ERROR_CODE.ASSIGN, "(1)"); :}
 								|
 								L_PAREN ActParsList R_PAREN
 								{: 
@@ -550,7 +699,7 @@ DesignatorStatementOptions ::= AssignOp Expr
 ActParsList ::= ActPars
 				|
 				error
-				{: parser.trackErrorRecovery(ERROR_CODE.PARAMETERS, "(1)"); :}
+				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.PARAMETERS, "(1)"); :}
 				|
 				/* epsilon */
 				;
