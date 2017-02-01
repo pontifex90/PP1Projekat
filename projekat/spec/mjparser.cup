@@ -32,10 +32,13 @@ parser code {:
 		VARIABLE,
 		METHOD,
 		PROGRAM,
-		CLASS_TYPE
+		CLASS,
+		ARRAY
 	}
 	
 	private static final String MAIN = "main";
+	private static final String SUPER_DOT = "super.";
+	
 	private static final String error_recovery_string = "Error recovery successful: ";
 
 	// Counting variables
@@ -220,10 +223,27 @@ action code {:
 	boolean isVoidMethod = false;
 	
 	// Semantic methods
+	
+	// Find object with identifier name.
+	private Obj findObjectWithName(String identifier, int line) {
+		String ident = identifier;
+		Obj result = Tab.find(ident);
+		for(int try = 10; try > 0 && result == Tab.noObj; try--) {
+			ident = SUPER_DOT + ident;
+			result = Tab.find(ident);
+		}
+		
+		if(result == Tab.noObj) {
+			parser.semantic_error("tried to used non-existing identifier \"" + identifier, line);
+		}
+		
+		return result;
+	}
+	
     private boolean doesSymbolAlreadyExist(String name, int line) {
     	boolean doesSymbolExist = Tab.currentScope.findSymbol(name) != null;
     	if(doesSymbolExist) {
-			parser.semantic_error("identificator with name \"" + name + "\" already exists.", line);
+			parser.semantic_error("identifier with name \"" + name + "\" already exists.", line);
 		}
 		return doesSymbolExist;
     }
@@ -251,40 +271,53 @@ action code {:
 		if(currentObjectType == null || currentObjectType == Tab.noType) {
 			// Failsafe.
 			parser.semantic_error("Constant \"" + name + "\" doesn't have a type defined.", line);
-		} else if(!doesSymbolAlreadyExist(name, line)){
-			// Symbol doesn't exist, check if type is correct.
-			if(doesTypeMatchWithCurrent(currentObjectType, line)) {
-				// Do the insertion.
-				Obj createdObject = insertToTable(SYMBOL_TYPE.CONSTANT, name, currentObjectType, line);
-				// Copy value.
-				createdObject.setAdr(currentObject.getAdr());
-				
-				return createdObject;
-			}
+			return Tab.noObj;
+		} 
+
+		// Check if something with that name exists and if types match.
+		if(doesSymbolAlreadyExist(name, line) || !doesTypeMatchWithCurrent(currentObjectType, line)){
+			return Tab.noObj;
 		}
 		
-		return null;
+		// Do the insertion.
+		Obj createdObject = insertToTable(SYMBOL_TYPE.CONSTANT, name, currentObjectType, line);
+		// Copy value.
+		createdObject.setAdr(currentObject.getAdr());
+		
+		return createdObject;
 	}
 		
-	private Obj addVariableToSymbolTable(String name, int line) {
-		if(parser.isFormalParametersContext) { return null; }
+	private Obj addVariableToSymbolTable(String name, int line, boolean isArray) {
+		if(parser.isFormalParametersContext) { return Tab.noObj; }
 		
-		if(!doesSymbolAlreadyExist(name, line)){
-			// Symbol doesn't exist, do the insertion.
-			return insertToTable(SYMBOL_TYPE.VARIABLE, name, currentType, line);
+		if(doesSymbolAlreadyExist(name, line)){
+			return Tab.noObj;
 		}
 		
-		return null;
+		// Symbol doesn't exist, do the insertion.
+		SYMBOL_TYPE type = isArray ? SYMBOL_TYPE.ARRAY : SYMBOL_TYPE.VARIABLE;
+		return insertToTable(type, name, currentType, line);
 	}
 	
 	private Obj addMethodToSymbolTable(String name, int line) {
 		// If it's a main method check if it is void. 
 		if(parser.isMainMethod() && !isVoidMethod) {
 			parser.semantic_error("main method must have void as a return type.", line);
+			return Tab.noObj;
+		} 
+		// Only class methods can be static.
+		else if(parser.isStaticContext && !parser.isClassContext)
+		{
+			parser.semantic_error("global methods can't be static.", line);
+			return Tab.noObj;
+		} 
+		// Check if some symbol with same name already exist.
+		if(doesSymbolAlreadyExist(name, line)){
+			return Tab.noObj;
 		}
+				
 		Struct methodType = isVoidMethod ? Tab.noType : currentType;
-		
-		return insertToTable(SYMBOL_TYPE.METHOD, name, methodType, line);
+		return insertToTable(SYMBOL_TYPE.METHOD, name, methodType, line);	
 	}
 	
 	private Obj addProgramToSymbolTable(String name, int line) {
@@ -292,12 +325,13 @@ action code {:
 	}
 	
 	private Obj addClassTypeToSymbolTable(String name, int line) {
-		return insertToTable(SYMBOL_TYPE.CLASS_TYPE, name, new Struct(Struct.Class), line);
+		return insertToTable(SYMBOL_TYPE.CLASS, name, new Struct(Struct.Class), line);
 	}
 	
 	private Obj insertToTable(SYMBOL_TYPE symbolType, String name, Struct currentObjectType, int line) {
 		int objectType;
 		String message;
+		String context;
 		
 		switch (symbolType) {
 			case CONSTANT:
@@ -307,7 +341,7 @@ action code {:
 				
 			case VARIABLE:
 				objectType = Obj.Var;
-				String context = parser.isGlobalContext ? parser.isClassContext ? "class" : "global" : "local";
+				context = parser.isGlobalContext ? parser.isClassContext ? "class" : "global" : "local";
 				message = "added " + context + " variable \"" + name + "\" to symbol table.";
 				break;
 				
@@ -321,9 +355,16 @@ action code {:
 				message = "added program \"" + name + "\" to symbol table.";
 				break;
 				
-			case CLASS_TYPE:
+			case CLASS:
 				objectType = Obj.Type;
 				message = "added class type \"" + name + "\" to symbol table.";
+				break;
+				
+			case ARRAY:
+				objectType = Obj.Var;
+				context = parser.isGlobalContext ? parser.isClassContext ? "class" : "global" : "local";
+				message = "added " + context + " array variable \"" + name + "\" to symbol table.";
+				currentObjectType = new Struct(Struct.Array, currentType);
 				break;
 				
 			default:
@@ -355,14 +396,14 @@ terminal Boolean BOOL ;
 non terminal Program, ProgramElementsList, MethodsDecl, ProgramElement, ConstDecl, VarDecl, ClassDecl ;
 non terminal ConstList, VarsElementsList, OneVar, StaticDeclarator, VoidType, FormPars, Statement, FormParsList, ClassExtender ;
 non terminal MethodsSection, MethodsList, VarsList, ForStatement, OptionalDesignatorStatement, OptionalCondition ;
-non terminal DesignatorStatement, Designator, DesignatorStatementOptions, DesignatorOptions, OneDesignatorOption ;
-non terminal Expr, ActParsList, ActPars, Negation, Term, AddTermList, AddOneTerm, Factor, MultiplyFactorList ;
+non terminal DesignatorStatement, DesignatorStatementOptions ;
+non terminal ActParsList, ActPars, Negation, AddTermList, AddOneTerm, MultiplyFactorList ;
 non terminal AddOp, AssignOp, AddOpRight, AddOpLeft, MulOp, MulOpRight, MulOpLeft, IfStatement, ActParsListOptional ;
-non terminal Condition, CondTerm, CondTermList, CondFact, CondFactList, RelOp, RelOpExprList, NewArrayType ; 
+non terminal Condition, CondTerm, CondTermList, CondFact, CondFactList, RelOp, RelOpExprList ; 
 non terminal Return, NumbersList, OneNumber, StatementsList, OpenScope, CloseScope ;
 
-non terminal Obj ProgName, OneConst, MethodName, ClassName ;
-non terminal Struct Type ;
+non terminal Obj ProgName, OneConst, MethodName, ClassName, Designator, DesignatorOptions, OneDesignatorOption ;
+non terminal Struct Type, Factor, Term, Expr, NewArrayType ;
 
 precedence left ELSE;
 
@@ -451,13 +492,13 @@ VarsElementsList ::= VarsElementsList COMMA OneVar
 OneVar ::= IDENT:varName
 			{: 
 				parser.incrementVarsCount(false); 
-				addVariableToSymbolTable(varName, varNameleft);
+				addVariableToSymbolTable(varName, varNameleft, false);
 			:}
  			|
  			IDENT:varName L_INDEXER R_INDEXER 
  			{: 
  				parser.incrementVarsCount(true);
- 				addVariableToSymbolTable(varName, varNameleft); 
+ 				addVariableToSymbolTable(varName, varNameleft, true); 
  			:}
  			;
  
@@ -772,15 +813,15 @@ MultiplyFactorList ::= MultiplyFactorList MulOp Factor
 
 Factor ::= Designator ActParsListOptional
 			|
-			NUMBER
+			OneConst:c
+			{: RESULT = c.getType(); :}
 			|
-			CHAR
+			NEW Type:t NewArrayType:arrayType
+			{: RESULT = arrayType == null ? t : arrayType; :}
 			|
-			BOOL
-			|
-			NEW Type NewArrayType
-			|
-			L_PAREN Expr R_PAREN ;
+			L_PAREN Expr:e R_PAREN 
+			{: RESULT = e; :}
+			;
 
 ActParsListOptional ::= L_PAREN ActParsList R_PAREN
 						|
@@ -788,6 +829,7 @@ ActParsListOptional ::= L_PAREN ActParsList R_PAREN
 						;
 
 NewArrayType ::= L_INDEXER Expr R_INDEXER
+					{: RESULT = new Struct(Struct.Array, currentType); :}
 					|
 					/* epsilon */
 					; 
