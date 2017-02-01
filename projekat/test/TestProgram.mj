@@ -2,23 +2,22 @@
 
 
 program test_303
-
-int a;
-
-class gad {
-	int a;
-}
-
-class AsdF {
-	int a;
+class asd {
+int asd;
+	{
+		void asdd()
+		{
+			this.asd = 4;
+		}
+	}
 }
 
 {
-	void main()
-	int a;
+	void main() 
+	int asff;
 	{
-	
 	}
+
 }
 
 

@@ -37,7 +37,6 @@ parser code {:
 	}
 	
 	private static final String MAIN = "main";
-	private static final String SUPER_DOT = "super.";
 	
 	private static final String error_recovery_string = "Error recovery successful: ";
 
@@ -62,7 +61,7 @@ parser code {:
 	boolean isStaticContext = false;
 	boolean isFormalParametersContext = false;
 	String currentMethodName = "";
-	Struct currentClassType = Tab.noType;
+	Obj currentClass = Tab.noObj;
 	
 	Logger log = Logger.getLogger(getClass());
      
@@ -217,6 +216,8 @@ init with {:
 :}
 
 action code {:
+	private static final String SUPER_DOT_STRING = "super.";
+	
 	public static final Struct boolType = new Struct(Struct.Bool);
 		
 	Struct currentType = Tab.noType;
@@ -228,8 +229,8 @@ action code {:
 	private Obj findObjectWithName(String identifier, int line) {
 		String ident = identifier;
 		Obj result = Tab.find(ident);
-		for(int try = 10; try > 0 && result == Tab.noObj; try--) {
-			ident = SUPER_DOT + ident;
+		for(int retry = 10; retry > 0 && result == Tab.noObj; retry--) {
+			ident = SUPER_DOT_STRING + ident;
 			result = Tab.find(ident);
 		}
 		
@@ -238,6 +239,32 @@ action code {:
 		}
 		
 		return result;
+	}
+	
+	private Obj getClassMember(String identifier, int line) {
+		Obj result = Tab.noObj;
+		for(Obj fld : parser.currentClass.getType().getMembers()) {
+  			if(fld.getName().equals(identifier)) {
+  				result = fld;
+  				break;
+  			}
+		}
+		
+		if(result == Tab.noObj) {
+			parser.semantic_error("tried to used non-existing class member \"" + identifier + "\"", line);
+		}
+		
+		return result;
+	}
+	
+	private boolean isThisAvailable(String identifier, int line) {
+		if(!parser.isClassContext) {
+			parser.semantic_error("tried to use \"this\" outside of class. (" + identifier + ")", line);
+		} else if(parser.isStaticContext) {
+			parser.semantic_error("tried to use \"this\" in static function. (" + identifier + ")", line);
+		}
+		
+		return parser.isClassContext && !parser.isStaticContext;
 	}
 	
     private boolean doesSymbolAlreadyExist(String name, int line) {
@@ -258,7 +285,7 @@ action code {:
     
     private void isClassExtensionValid(Struct parentClassType, int line) {
 		// Check if class tries to extend itself.
-		if(parentClassType == parser.currentClassType && parentClassType != Tab.noType) {
+		if(parentClassType == parser.currentClass.getType() && parentClassType != Tab.noType) {
 			parser.semantic_error("class tried to extend itself.", line);
 		} 
 		// Check if class tried to extend primitive or non-existing type.
@@ -340,9 +367,16 @@ action code {:
 				break;
 				
 			case VARIABLE:
-				objectType = Obj.Var;
+				objectType = parser.isClassContext ? Obj.Fld : Obj.Var;
 				context = parser.isGlobalContext ? parser.isClassContext ? "class" : "global" : "local";
 				message = "added " + context + " variable \"" + name + "\" to symbol table.";
+				break;
+				
+			case ARRAY:
+				objectType = parser.isClassContext ? Obj.Fld : Obj.Var;
+				context = parser.isGlobalContext ? parser.isClassContext ? "class" : "global" : "local";
+				message = "added " + context + " array variable \"" + name + "\" to symbol table.";
+				currentObjectType = new Struct(Struct.Array, currentType);
 				break;
 				
 			case METHOD:
@@ -358,13 +392,6 @@ action code {:
 			case CLASS:
 				objectType = Obj.Type;
 				message = "added class type \"" + name + "\" to symbol table.";
-				break;
-				
-			case ARRAY:
-				objectType = Obj.Var;
-				context = parser.isGlobalContext ? parser.isClassContext ? "class" : "global" : "local";
-				message = "added " + context + " array variable \"" + name + "\" to symbol table.";
-				currentObjectType = new Struct(Struct.Array, currentType);
 				break;
 				
 			default:
@@ -384,7 +411,7 @@ action code {:
 	}
 :}
 
-terminal PROG, CLASS, CONST, EQUALS, L_BRACE, R_BRACE, L_PAREN, R_PAREN, SEMI, COMMA, L_INDEXER, R_INDEXER ;
+terminal PROG, CLASS, THIS, SUPER, CONST, EQUALS, L_BRACE, R_BRACE, L_PAREN, R_PAREN, SEMI, COMMA, L_INDEXER, R_INDEXER ;
 terminal EXTENDS, STATIC, VOID, DOT, INCREMENT, DECREMENT, NEW, FOR, PRINT, READ, CONTINUE, BREAK, RETURN ;
 terminal PLUS, MINUS, PLUS_EQUALS, MINUS_EQUALS, MULTIPLY, DIVIDE, MODULATE, MULTIPLY_EQUALS, DIVIDE_EQUALS, MODULATE_EQUALS ;
 terminal IF, ELSE, AND, OR, EQUALITY, NOT_EQUAL, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL;
@@ -402,7 +429,7 @@ non terminal AddOp, AssignOp, AddOpRight, AddOpLeft, MulOp, MulOpRight, MulOpLef
 non terminal Condition, CondTerm, CondTermList, CondFact, CondFactList, RelOp, RelOpExprList ; 
 non terminal Return, NumbersList, OneNumber, StatementsList, OpenScope, CloseScope ;
 
-non terminal Obj ProgName, OneConst, MethodName, ClassName, Designator, DesignatorOptions, OneDesignatorOption ;
+non terminal Obj ProgName, OneConst, MethodName, ClassName, Designator, SuperDesignator ;
 non terminal Struct Type, Factor, Term, Expr, NewArrayType ;
 
 precedence left ELSE;
@@ -526,7 +553,7 @@ Type ::= IDENT:typeName
  
 ClassDecl ::= CLASS ClassName:c OpenScope ClassExtender L_BRACE VarsList MethodsSection R_BRACE
 				{: 
-					parser.currentClassType = Tab.noType;
+					parser.currentClass = Tab.noObj;
 					Tab.chainLocalSymbols(c);
 				:}
 				CloseScope
@@ -534,9 +561,8 @@ ClassDecl ::= CLASS ClassName:c OpenScope ClassExtender L_BRACE VarsList Methods
 
 ClassName ::= IDENT:className 
 				{: 
-					Obj classSymbol = addClassTypeToSymbolTable(className, classNameleft); 
-					parser.currentClassType = classSymbol.getType();		
-					RESULT = classSymbol;
+					parser.currentClass = addClassTypeToSymbolTable(className, classNameleft);
+					RESULT = parser.currentClass;
 				:}
 				;
 
@@ -705,21 +731,32 @@ RelOp ::= EQUALITY | NOT_EQUAL | GREATER | GREATER_EQUAL | LESS | LESS_EQUAL ;
 
 DesignatorStatement ::= Designator DesignatorStatementOptions ;
 
-Designator ::= IDENT DesignatorOptions ;
+Designator ::= IDENT:identifier
+				{: RESULT = findObjectWithName(identifier, identifierleft); :}
+				|
+				THIS DOT IDENT:identifier
+				{:
+					if(isThisAvailable(identifier, identifierleft)) {
+						RESULT = getClassMember(identifier, identifierleft);
+						// todo ivansm make class fetching work
+					}
+				:}
+				|
+				SUPER DOT SuperDesignator 
+				|
+				Designator DOT IDENT
+				|
+				Designator L_INDEXER Expr R_INDEXER
+				|
+				Designator L_INDEXER error R_INDEXER
+				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.INDEXING, "(1)"); :}
+				;
 
-DesignatorOptions ::= DesignatorOptions OneDesignatorOption 
-						|
-						/* epsilon */
-						;
-   
-OneDesignatorOption ::= DOT IDENT
-						|
-						L_INDEXER Expr R_INDEXER
-						|
-						L_INDEXER error R_INDEXER
-						{: parser.trackSyntaxErrorRecovery(ERROR_CODE.INDEXING, "(1)"); :}
-						;
-						
+SuperDesignator ::= SUPER DOT SuperDesignator
+					|
+					IDENT
+					;
+					
 DesignatorStatementOptions ::= AssignOp Expr
 								|
 								AssignOp error
