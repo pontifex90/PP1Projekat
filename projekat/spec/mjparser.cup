@@ -81,7 +81,17 @@ parser code {:
   	public void semantic_error(String message, int line) {
         report("Semantic error on line " + line + ": " + message, null, LOG_TYPE.ERROR);
     }
-  
+
+  	public void usage_info(Obj usedObject, String message, int line) {
+  		String visitorMessage = "";
+  		if(usedObject != null) {
+	  		DumpSymbolTableVisitor visitor = new DumpSymbolTableVisitor();
+			visitor.visitObjNode(usedObject);
+			visitorMessage = " [ " + visitor.getOutput() + "]"; 
+		}
+		report("Usage info on line " + line + ": " + message + visitorMessage, null, LOG_TYPE.DEBUG);
+	}
+
   	public void semantic_info(String message, int line) {
 		report("Semantic info on line " + line + ": " + message, null, LOG_TYPE.DEBUG);
 	}
@@ -158,12 +168,15 @@ parser code {:
     	return isMethodContext && MAIN.equals(currentMethodName);
     }
     
+	public String getContextStringForDeclaration() {
+		return isFormalParametersContext ? "formal parameter" : isMethodContext ? "local" : isClassContext ? "class" : "global";
+	}
+	
     public void trackSyntaxErrorRecovery(ERROR_CODE error, String additionalInfo) {
     	String message = error_recovery_string;
     	switch (error) {
     		case VARIABLE:
-    			String context = isGlobalContext ? isClassContext ? "Class" : "Global" : "Local";
-    			message += context + " variable declaration error "; 
+    			message += getContextStringForDeclaration() + " variable declaration error "; 
     			break;
     			
     		case ASSIGN:
@@ -216,7 +229,7 @@ init with {:
 :}
 
 action code {:
-	private static final String SUPER_DOT_STRING = "super.";
+	// private static final String SUPER_DOT_STRING = "super.";
 	
 	public static final Struct boolType = new Struct(Struct.Bool);
 		
@@ -224,26 +237,81 @@ action code {:
 	boolean isVoidMethod = false;
 	
 	// Semantic methods
-	
-	// Find object with identifier name.
-	private Obj findObjectWithName(String identifier, int line) {
-		String ident = identifier;
-		Obj result = Tab.find(ident);
-		for(int retry = 10; retry > 0 && result == Tab.noObj; retry--) {
-			ident = SUPER_DOT_STRING + ident;
-			result = Tab.find(ident);
+
+	// Only global/local. Class object usage is set in findClassMemberWithName.
+	private String getContextStringForUsage(String identifier) {
+		Obj currentObject = Tab.currentScope.findSymbol(identifier);
+		boolean isInCurrentScope = currentObject != null;
+		if(isInCurrentScope) {
+			return "local";
+		}
+		currentObject = Tab.currentScope.getOuter().findSymbol(identifier);
+		
+		boolean isInOuterScope = currentObject != null;
+		if(isInOuterScope) {
+			return "formal parameter";
 		}
 		
+		return "global";
+	}
+
+	// Find object with identifier name.
+	private Obj findObjectWithName(String identifier, int line) {
+		Obj result = Tab.find(identifier);
+		
+		// Check if field is supper class.
+		// No super in specification.
+		// for(int retry = 10; retry > 0 && result == Tab.noObj; retry--) {
+			// ident = SUPER_DOT_STRING + ident;
+			// result = Tab.find(ident);
+		// }
+		
 		if(result == Tab.noObj) {
-			parser.semantic_error("tried to used non-existing identifier \"" + identifier, line);
+			parser.semantic_error("tried to used non-existing identifier \"" + identifier + "\"", line);
+		} else {
+			String objectKind = "";
+			switch (result.getKind()) {
+				case Obj.Var:
+					objectKind = getContextStringForUsage(identifier) + " variable";
+					break;
+					
+				case Obj.Con:
+					objectKind = "constant";
+					break;
+					
+				case Obj.Meth:
+					objectKind = "global method";
+					break;
+				
+				case Obj.Fld:
+					objectKind = "class variable";
+					break;
+				
+				case Obj.Type:
+					parser.semantic_error("tried to use class name ("+ identifier +") as a variable name", line);
+					break;
+				
+				default:
+					parser.semantic_error("unknown object kind ("+ result.getKind() +") of the identifier \"" + identifier + "\"", line);
+					break;
+			}
+			
+			if(objectKind.length() > 0) {
+				parser.usage_info(result, objectKind + " \"" + identifier + "\" used.", line);
+			}
 		}
 		
 		return result;
 	}
-	
-	private Obj getClassMember(String identifier, int line) {
+		
+	private Obj findClassMemberWithName(Obj classObj, String identifier, int line) {
 		Obj result = Tab.noObj;
-		for(Obj fld : parser.currentClass.getType().getMembers()) {
+		if(classObj == null) {
+			parser.semantic_error("class object is null.", line);
+			return result;
+		}
+		
+		for(Obj fld : classObj.getType().getMembers()) {
   			if(fld.getName().equals(identifier)) {
   				result = fld;
   				break;
@@ -252,6 +320,18 @@ action code {:
 		
 		if(result == Tab.noObj) {
 			parser.semantic_error("tried to used non-existing class member \"" + identifier + "\"", line);
+		} else {
+			String memberType = "UNKNOWN";
+			if(result.getKind() == Obj.Meth) {
+				memberType = "method";
+			} 
+			else if(result.getKind() == Obj.Fld) {
+				memberType = "field";
+			} else {
+				parser.semantic_error("unknown class member type \"" + identifier + "\"", line);
+			}
+			
+			parser.usage_info(result, "class " + memberType + " \"" + identifier + "\" of class instance \"" + classObj.getName() + "\" used.", line);
 		}
 		
 		return result;
@@ -310,13 +390,11 @@ action code {:
 		Obj createdObject = insertToTable(SYMBOL_TYPE.CONSTANT, name, currentObjectType, line);
 		// Copy value.
 		createdObject.setAdr(currentObject.getAdr());
-		
+
 		return createdObject;
 	}
 		
 	private Obj addVariableToSymbolTable(String name, int line, boolean isArray) {
-		if(parser.isFormalParametersContext) { return Tab.noObj; }
-		
 		if(doesSymbolAlreadyExist(name, line)){
 			return Tab.noObj;
 		}
@@ -356,53 +434,50 @@ action code {:
 	}
 	
 	private Obj insertToTable(SYMBOL_TYPE symbolType, String name, Struct currentObjectType, int line) {
-		int objectType;
+		int objectKind;
 		String message;
-		String context;
 		
 		switch (symbolType) {
 			case CONSTANT:
-				objectType = Obj.Con;
+				objectKind = Obj.Con;
 				message = "added constant \"" + name + "\" to symbol table.";
 				break;
 				
 			case VARIABLE:
-				objectType = parser.isClassContext ? Obj.Fld : Obj.Var;
-				context = parser.isGlobalContext ? parser.isClassContext ? "class" : "global" : "local";
-				message = "added " + context + " variable \"" + name + "\" to symbol table.";
+				objectKind = parser.isClassContext && !parser.isMethodContext ? Obj.Fld : Obj.Var;
+				message = "added " + parser.getContextStringForDeclaration() + " variable \"" + name + "\" to symbol table.";
 				break;
 				
 			case ARRAY:
-				objectType = parser.isClassContext ? Obj.Fld : Obj.Var;
-				context = parser.isGlobalContext ? parser.isClassContext ? "class" : "global" : "local";
-				message = "added " + context + " array variable \"" + name + "\" to symbol table.";
+				objectKind = parser.isClassContext && !parser.isMethodContext ? Obj.Fld : Obj.Var;
+				message = "added " + parser.getContextStringForDeclaration() + " array variable \"" + name + "\" to symbol table.";
 				currentObjectType = new Struct(Struct.Array, currentType);
 				break;
 				
 			case METHOD:
-				objectType = Obj.Meth;
+				objectKind = Obj.Meth;
 				message = "added method \"" + name + "\" to symbol table.";
 				break;
 				
 			case PROGRAM:
-				objectType = Obj.Prog;
+				objectKind = Obj.Prog;
 				message = "added program \"" + name + "\" to symbol table.";
 				break;
 				
 			case CLASS:
-				objectType = Obj.Type;
+				objectKind = Obj.Type;
 				message = "added class type \"" + name + "\" to symbol table.";
 				break;
 				
 			default:
-				objectType = Obj.NO_VALUE;
+				objectKind = Obj.NO_VALUE;
 				message = "UNKNOWN SYMBOL TYPE";
 				parser.semantic_error(message, line);
 				break;
 		}
 		
 		// Insert object to table.
-		Obj createdObject = Tab.insert(objectType, name, currentObjectType);
+		Obj createdObject = Tab.insert(objectKind, name, currentObjectType);
 				
 		// Create object node string.
 		parser.log_symbol_detected(createdObject, message, line);
@@ -411,7 +486,7 @@ action code {:
 	}
 :}
 
-terminal PROG, CLASS, THIS, SUPER, CONST, EQUALS, L_BRACE, R_BRACE, L_PAREN, R_PAREN, SEMI, COMMA, L_INDEXER, R_INDEXER ;
+terminal PROG, CLASS, THIS, CONST, EQUALS, L_BRACE, R_BRACE, L_PAREN, R_PAREN, SEMI, COMMA, L_INDEXER, R_INDEXER ;
 terminal EXTENDS, STATIC, VOID, DOT, INCREMENT, DECREMENT, NEW, FOR, PRINT, READ, CONTINUE, BREAK, RETURN ;
 terminal PLUS, MINUS, PLUS_EQUALS, MINUS_EQUALS, MULTIPLY, DIVIDE, MODULATE, MULTIPLY_EQUALS, DIVIDE_EQUALS, MODULATE_EQUALS ;
 terminal IF, ELSE, AND, OR, EQUALITY, NOT_EQUAL, GREATER, GREATER_EQUAL, LESS, LESS_EQUAL;
@@ -429,8 +504,8 @@ non terminal AddOp, AssignOp, AddOpRight, AddOpLeft, MulOp, MulOpRight, MulOpLef
 non terminal Condition, CondTerm, CondTermList, CondFact, CondFactList, RelOp, RelOpExprList ; 
 non terminal Return, NumbersList, OneNumber, StatementsList, OpenScope, CloseScope ;
 
-non terminal Obj ProgName, OneConst, MethodName, ClassName, Designator, SuperDesignator ;
-non terminal Struct Type, Factor, Term, Expr, NewArrayType ;
+non terminal Obj ProgName, OneConst, MethodName, Designator, Type ;
+non terminal Struct Factor, Term, Expr, NewArrayType, ClassName ;
 
 precedence left ELSE;
 
@@ -534,17 +609,17 @@ Type ::= IDENT:typeName
 				Obj typeNode = Tab.find(typeName);
 				if (typeNode == Tab.noObj) {
 					parser.semantic_error("type \"" + typeName + "\" not found in symbol table.", typeNameleft);
-					RESULT = Tab.noType;
+					RESULT = Tab.noObj;
 					currentType = Tab.noType;
 				}
 				else {
 					if (Obj.Type == typeNode.getKind()) {
-						RESULT = typeNode.getType();
+						RESULT = typeNode;
 						currentType = typeNode.getType();
 					}
 					else {
 						parser.semantic_error("\"" + typeName + "\" is not a type.", typeNameleft);
-						RESULT = Tab.noType;
+						RESULT = Tab.noObj;
 						currentType = Tab.noType;
 					}
 				}
@@ -562,12 +637,12 @@ ClassDecl ::= CLASS ClassName:c OpenScope ClassExtender L_BRACE VarsList Methods
 ClassName ::= IDENT:className 
 				{: 
 					parser.currentClass = addClassTypeToSymbolTable(className, classNameleft);
-					RESULT = parser.currentClass;
+					RESULT = parser.currentClass.getType();
 				:}
 				;
 
-ClassExtender ::= EXTENDS Type:parentClassType
-					{: isClassExtensionValid(parentClassType, parentClassTypeleft); :} 
+ClassExtender ::= EXTENDS Type:parentClassObject
+					{: isClassExtensionValid(parentClassObject.getType(), parentClassObjectleft); :} 
 					|
 					error
 					{: parser.trackSyntaxErrorRecovery(ERROR_CODE.EXTENDS, "(1)"); :}
@@ -591,7 +666,7 @@ MethodsList ::= MethodsList MethodsDecl
 				; 
 
 MethodsDecl ::= {: parser.isMethodContext = true; // Starting method context :}
-				StaticDeclarator VoidType MethodName:m OpenScope L_PAREN FormPars R_PAREN VarsList L_BRACE StatementsList R_BRACE 
+				StaticDeclarator VoidType MethodName:m OpenScope L_PAREN FormPars R_PAREN OpenScope VarsList L_BRACE StatementsList R_BRACE CloseScope
 				{: 
 					parser.incrementMethodsCount();
 					parser.isMethodContext = false; // Closing method context
@@ -737,26 +812,39 @@ Designator ::= IDENT:identifier
 				THIS DOT IDENT:identifier
 				{:
 					if(isThisAvailable(identifier, identifierleft)) {
-						RESULT = getClassMember(identifier, identifierleft);
-						// todo ivansm make class fetching work
+						RESULT = findClassMemberWithName(parser.currentClass, identifier, identifierleft);
 					}
 				:}
 				|
-				SUPER DOT SuperDesignator 
+				Designator:des DOT IDENT:identifier
+				{: RESULT = findClassMemberWithName(des, identifier, identifierleft); :}
 				|
-				Designator DOT IDENT
-				|
-				Designator L_INDEXER Expr R_INDEXER
+				Designator:des L_INDEXER Expr R_INDEXER
+				{:
+				 	if (des.getType().getKind() == Struct.Array) {
+						RESULT = new Obj(Obj.Elem, "", des.getType().getElemType());
+						parser.usage_info(des, "element of array \"" + des.getName() + "\" used.", desleft);
+					} else {
+						parser.semantic_error("tried to used indexing on a non-array object \"" + des.getName() + "\"", desleft);
+					}
+				:}
 				|
 				Designator L_INDEXER error R_INDEXER
 				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.INDEXING, "(1)"); :}
+				
+				/*
+				// Super is not defined by specification.
+				|
+				SUPER DOT SuperDesignator 
+				*/
 				;
-
+/*
 SuperDesignator ::= SUPER DOT SuperDesignator
 					|
 					IDENT
 					;
-					
+*/
+				
 DesignatorStatementOptions ::= AssignOp Expr
 								|
 								AssignOp error
@@ -853,8 +941,17 @@ Factor ::= Designator ActParsListOptional
 			OneConst:c
 			{: RESULT = c.getType(); :}
 			|
-			NEW Type:t NewArrayType:arrayType
-			{: RESULT = arrayType == null ? t : arrayType; :}
+			NEW Type:typeObject NewArrayType:arrayType
+			{:
+				boolean isArrayType = arrayType != null;
+				String objectTypeString = typeObject.getName();
+				if(isArrayType) {
+					objectTypeString = "array of " + objectTypeString; 
+				}
+				parser.usage_info(null, "instantiated new object of type \"" + objectTypeString + "\".", typeObjectleft);
+				
+				RESULT = !isArrayType ? typeObject.getType() : arrayType; 
+			:}
 			|
 			L_PAREN Expr:e R_PAREN 
 			{: RESULT = e; :}

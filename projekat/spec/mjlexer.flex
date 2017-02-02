@@ -47,7 +47,6 @@ return new_symbol(sym.EOF);
 "new" 		{ return new_symbol(sym.NEW, yytext()); }
 "for" 		{ return new_symbol(sym.FOR, yytext()); }
 "this" 		{ return new_symbol(sym.THIS, yytext()); }
-"super" 	{ return new_symbol(sym.SUPER, yytext()); }
 "=" 		{ return new_symbol(sym.EQUALS, yytext()); }
 "{" 		{ return new_symbol(sym.L_BRACE, yytext()); }
 "}" 		{ return new_symbol(sym.R_BRACE, yytext()); }

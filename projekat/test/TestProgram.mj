@@ -2,20 +2,15 @@
 
 
 program test_303
-class asd {
-int asd;
-	{
-		void asdd()
-		{
-			this.asd = 4;
-		}
-	}
-}
 
+class ddd {
+	
+}
 {
-	void main() 
-	int asff;
+	void main(int lokalna)
+	int a; 
 	{
+		a = new ddd;
 	}
 
 }
