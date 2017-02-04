@@ -34,8 +34,14 @@ public class MJParserTest {
 			
 			MJParser p = new MJParser(lexer);
 	        Symbol s = p.parse();  //pocetak parsiranja
+	        //Tab.dump();
 	        
-	        Tab.dump();
+	        if(!p.wasParsingSuccessful) {
+	        	log.error(p.allErrorMessages);
+	        	log.error("Parsing finished with ERRORS!");
+	        } else {
+	        	log.info("Parsing finished successfully!");
+	        }
 	        
 //	        log.info("\n===============================\nVARS COUNTING:");
 //	        log.info("Constants number: " + p.constantsCount);
