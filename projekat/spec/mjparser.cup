@@ -64,7 +64,7 @@ parser code {:
 	boolean isMethodContext = false;
 	boolean isStaticContext = false;
 	boolean isFormalParametersContext = false;
-	String currentMethodName = "";
+	Obj currentMethodObject = Tab.noObj;
 	Obj currentClass = Tab.noObj;
 	Scope currentClassScope = null;
 	
@@ -173,7 +173,7 @@ parser code {:
     }
     
     public boolean isMainMethod() {
-    	return isMethodContext && MAIN.equals(currentMethodName);
+    	return isMethodContext && MAIN.equals(currentMethodObject.getName());
     }
     
 	public String getContextStringForDeclaration() {
@@ -309,10 +309,10 @@ action code {:
 	}
 	
 	private boolean areCompatibleTypes(Struct type1, Struct type2, int line) {
-		if(type1 == Tab.noType || type2 == Tab.noType) { return false; }
+		if((type1 == Tab.noType) != (type2 == Tab.noType)) { return false; }
 		
 		boolean areCompatible = type1.compatibleWith(type2) || 
-			(type1.getKind() == Struct.Class && type2.getKind() == Struct.Class && areClassesCompatible(type1, type2) && areClassesCompatible(type1, type2));
+			(type1.getKind() == Struct.Class && type2.getKind() == Struct.Class && areClassesCompatible(type1, type2));
 		 
 		if(!areCompatible) {
 			parser.semantic_error("incompatible types.", line);
@@ -323,18 +323,24 @@ action code {:
 	
 	private boolean areClassesCompatible(Struct type1, Struct type2) {
 		// Go through all members and see if other type has a "parent" member.
+		// Destination type (Type1) needs to have all "parent" members in Type2 defined. 
+		// This is to make sure that if A extends B, b = a is true and a = b is false. 
+		boolean found = false;
 		for(Obj fld1 : type1.getMembers()) {
 			if(!fld1.getName().startsWith(CLASS_COMPATIBILITY_PREFIX)) { continue; }
 			
+			found = false;
 			for(Obj fld2 : type2.getMembers()) {
 				if(!fld2.getName().startsWith(CLASS_COMPATIBILITY_PREFIX)) { continue; }
 				
 	  			if(fld1.getName().equals(fld2.getName()) || fld2.getName().equals(fld1.getName())) {
-	  				return true;
+	  				found = true;
 	  			}
 	  		}
+			
+			if(!found) { break; }
 		}
-		return false;
+		return found;
 	}
 	
 	private void addClassCompatibilityVar(String className) {
@@ -353,6 +359,17 @@ action code {:
 		}
 		
 		return isAssignable;
+	}
+	
+	// Primitive types are int, char and bool.
+	private boolean isPrimitiveType(Obj object, int line) {
+		Struct type = object.getType();
+		boolean isPrimitive = type == Tab.intType || type == Tab.charType || type == boolType;
+		if(!isPrimitive) {
+			parser.semantic_error("operation can be done only on primitive types (int, char and boolean).", line);
+		}
+		
+		return isPrimitive; 
 	}
 	
 	private void checkRightOperatorUsageAvailability(int line) {
@@ -419,7 +436,7 @@ action code {:
 				case Obj.Meth:
 					// In static context, only static methods and global variables can be called.
 					if(parser.isStaticContext && !isStaticMethod(parser.currentClass, identifier)) {
-						parser.semantic_error("tried to use non-static method \"" + identifier + "\" in static method \"" + parser.currentMethodName + "\".", line);
+						parser.semantic_error("tried to use non-static method \"" + identifier + "\" in static method \"" + parser.currentMethodObject.getName() + "\".", line);
 					} else {
 						objectKind = getContextStringForUsage(identifier) + " method";
 					}
@@ -721,16 +738,16 @@ terminal String IDENT ;
 terminal Character CHAR ;
 terminal Boolean BOOL ;
 
-non terminal Program, ProgramElementsList, MethodsDecl, ProgramElement, ConstDecl, VarDecl, ClassDecl ;
+non terminal Program, ProgramElementsList, MethodDecl, ProgramElement, ConstDecl, VarDecl, ClassDecl ;
 non terminal ConstList, VarsElementsList, OneVar, StaticDeclarator, VoidType, FormPars, Statement, FormParsList ;
 non terminal MethodsSection, MethodsList, VarsList, ForStatement, OptionalDesignatorStatement, OptionalCondition ;
 non terminal ActParsList, ActPars, Negation ;
 non terminal AssignOp, AddOpRight, AddOpLeft, MulOpRight, MulOpLeft, IfStatement ;
 non terminal Condition, CondTerm, CondTermList, CondFact, CondFactList, RelOp, RelOpExprList ; 
-non terminal Return, NumbersList, OneNumber, StatementsList, OpenScope, CloseScope ;
+non terminal NumbersListOptional, NumbersList, StatementsList, OpenScope, CloseScope ;
 
 non terminal Obj ProgName, Expr, OneConst, MethodName, Designator, Type, Factor, NewArrayType, Term, TermList, ClassExtender ;
-non terminal Struct ClassName, ActParsListOptional, DesignatorStatement ;
+non terminal Struct ClassName, ActParsListOptional, DesignatorStatement, Return ;
 
 precedence left ELSE;
 
@@ -912,14 +929,15 @@ MethodsSection ::= L_BRACE MethodsList R_BRACE
 					/* epsilon */
 					;
 
-MethodsList ::= MethodsList MethodsDecl 
+MethodsList ::= MethodsList MethodDecl 
 				|
 				/* epsilon */
 				; 
 
-MethodsDecl ::= {: parser.isMethodContext = true; // Starting method context :}
+MethodDecl ::= {: parser.isMethodContext = true; // Starting method context :}
 				StaticDeclarator VoidType MethodName:m OpenScope L_PAREN FormPars R_PAREN OpenScope VarsList L_BRACE StatementsList R_BRACE CloseScope
 				{: 
+					parser.currentMethodObject = Tab.noObj;
 					parser.incrementMethodsCount();
 					parser.isMethodContext = false; // Closing method context
 					Tab.chainLocalSymbols(m); 
@@ -929,8 +947,8 @@ MethodsDecl ::= {: parser.isMethodContext = true; // Starting method context :}
 
 MethodName ::= IDENT:methodName
 				{:
-					parser.currentMethodName = methodName; // Save method name so we can detect main function later
-					RESULT = addMethodToSymbolTable(methodName, methodNameleft);
+					parser.currentMethodObject = addMethodToSymbolTable(methodName, methodNameleft);
+					RESULT = parser.currentMethodObject; 
 				:}
 				;
 
@@ -974,11 +992,18 @@ Statement ::= DesignatorStatement SEMI
 				|
 				CONTINUE SEMI
 				|
-				Return
+				Return:ret
+				{:
+					if(!parser.isMethodContext) {
+						parser.semantic_error("return can be used only in methods.", retleft);
+					}
+				:}
 				|
-				READ L_PAREN Designator R_PAREN SEMI
+				READ L_PAREN Designator:des R_PAREN SEMI
+				{: boolean isOk = canBeAssignedTo(des, desleft) && isPrimitiveType(des, desleft); :}
 				|
-				PRINT L_PAREN Expr NumbersList R_PAREN SEMI 
+				PRINT L_PAREN Expr:expr NumbersListOptional R_PAREN SEMI
+				{: boolean isOk = isPrimitiveType(expr, exprleft); :} 
 				|
 				L_BRACE StatementsList R_BRACE
 				{: parser.statementsBlockCount++; :}
@@ -989,19 +1014,31 @@ StatementsList ::= StatementsList Statement
 					/* epsilon */
 					;				
 				
-NumbersList ::= OneNumber
+NumbersListOptional ::= COMMA NumbersList
 				|
 				/* epsilon*/
 				;
 				
-OneNumber ::= OneNumber SEMI NUMBER
+NumbersList ::= NumbersList COMMA NUMBER  
 				|
 				NUMBER
 				;				
-				
-Return ::= RETURN SEMI
+
+Return ::= RETURN SEMI:s
+			{: 
+				if(!isVoidMethod) {
+					parser.semantic_error("method must return a type.", sleft);
+				}
+			:}
 			|
-			RETURN Expr SEMI
+			RETURN Expr:expr SEMI
+			{:
+				if(isVoidMethod) {
+					parser.semantic_error("void methods shouldn't return a type.", exprleft);
+				} else if(!areCompatibleTypes(parser.currentMethodObject.getType(), expr.getType(), exprleft)) {
+						parser.semantic_error("tried to return wrong value type.", exprleft);
+				}
+			:}
 			;
 				
 ForStatement ::= FOR L_PAREN OptionalDesignatorStatement SEMI OptionalCondition SEMI OptionalDesignatorStatement R_PAREN Statement ;

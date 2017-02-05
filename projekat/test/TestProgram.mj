@@ -1,33 +1,25 @@
-//Test 303
-
 program test_303
-class A {
-	{
-		static void Lele() {
-		
-		}
-	}
-}
+
+int f;
 class Bla {
-	int a;
-	{
-		static void aaa(){
-			
+	bool a;
+}
+class AAA extends Bla {
+int f;
+	{	int aa() {
 		}
-		
-		void b() {
-			b();
+		int a() {
+			return true;
 		}
 	}
 }
- 
 
 {
-	int aa() {}
-	void main()
-	int a[]; Bla b;
+	int main()
+	Bla a; AAA dd;
 	{
-		b.b();
+		a = dd;
+		return 3;
 	}
 }
 
