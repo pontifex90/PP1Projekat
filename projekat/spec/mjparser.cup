@@ -247,6 +247,7 @@ action code {:
 
 	boolean isVoidMethod = false;
 	boolean hasUsedLeftOperator = false;
+	boolean isClassAndArrayCompatibleRelOp = false;
 	
 	// Semantic methods
 	
@@ -302,13 +303,48 @@ action code {:
 	private boolean isObjectMethod(Obj object, int line) {
 		boolean isMethod = object.getKind() == Obj.Meth;
 		if(!isMethod && object != Tab.noObj) {
-			parser.semantic_error("tried to use a field \"" + object.getName() + "\" as a method.", line);
+			parser.semantic_error("tried to use field \"" + object.getName() + "\" as a method.", line);
 		}
 		
 		return isMethod;
 	}
 	
-	private boolean areCompatibleTypes(Struct type1, Struct type2, int line) {
+	private boolean isObjectVariable(Obj object, int line) {
+		boolean isVariable = object.getKind() == Obj.Con || object.getKind() == Obj.Var 
+			|| object.getKind() == Obj.Fld || object.getKind() == Obj.Elem;
+		if(!isVariable && object != Tab.noObj) {
+			parser.semantic_error("tried to use method \"" + object.getName() + "\" as a variable.", line);
+		}
+		
+		return isVariable;
+	}
+	
+	private boolean isRelOpCompatible(Struct type1, Struct type2, int line) {
+		if((type1.getKind() == Struct.Class || type2.getKind() == Struct.Class 
+			|| type1.getKind() == Struct.Array || type2.getKind() == Struct.Array
+			|| type1 == boolType || type2 == boolType)
+			&& !isClassAndArrayCompatibleRelOp) {
+			parser.semantic_error("booleans, classes and arrays can only use \"==\" and \"!=\" relative operators.", line);
+		}
+		
+		boolean isCompatible = type1.compatibleWith(type2);
+		if(!isCompatible) {
+			parser.semantic_error("tried to compare incompatible types.", line);
+		}
+		
+		return isCompatible;
+	}
+	
+	private boolean areCompatibleTypes(Obj typeObj1, Obj typeObj2, boolean shouldCheckMethod, int line) {
+		if(typeObj1.getKind() == Obj.Con || typeObj1.getKind() == Obj.Type || typeObj1.getKind() == Obj.Prog 
+			|| (shouldCheckMethod && typeObj1.getKind() == Obj.Meth)) {
+			parser.semantic_error("cannot assign to constant, method, class name or program name.", line);
+			return false;
+		}
+		
+		Struct type1 = typeObj1.getType();
+		Struct type2 = typeObj2.getType();
+		
 		if((type1 == Tab.noType) != (type2 == Tab.noType)) { return false; }
 		
 		boolean areCompatible = type1.compatibleWith(type2) || 
@@ -743,8 +779,8 @@ non terminal ConstList, VarsElementsList, OneVar, StaticDeclarator, VoidType, Fo
 non terminal MethodsSection, MethodsList, VarsList, ForStatement, OptionalDesignatorStatement, OptionalCondition ;
 non terminal ActParsList, ActPars, Negation ;
 non terminal AssignOp, AddOpRight, AddOpLeft, MulOpRight, MulOpLeft, IfStatement ;
-non terminal Condition, CondTerm, CondTermList, CondFact, CondFactList, RelOp, RelOpExprList ; 
-non terminal NumbersListOptional, NumbersList, StatementsList, OpenScope, CloseScope ;
+non terminal Condition, CondTerm, CondTermList, CondFact, CondFactList ; 
+non terminal NumbersListOptional, NumbersList, StatementsList, OpenScope, CloseScope, RelOp ;
 
 non terminal Obj ProgName, Expr, OneConst, MethodName, Designator, Type, Factor, NewArrayType, Term, TermList, ClassExtender ;
 non terminal Struct ClassName, ActParsListOptional, DesignatorStatement, Return ;
@@ -1035,7 +1071,7 @@ Return ::= RETURN SEMI:s
 			{:
 				if(isVoidMethod) {
 					parser.semantic_error("void methods shouldn't return a type.", exprleft);
-				} else if(!areCompatibleTypes(parser.currentMethodObject.getType(), expr.getType(), exprleft)) {
+				} else if(!areCompatibleTypes(parser.currentMethodObject, expr, false, exprleft)) {
 						parser.semantic_error("tried to return wrong value type.", exprleft);
 				}
 			:}
@@ -1070,31 +1106,52 @@ OptionalCondition ::= Condition
 						{: parser.trackSyntaxErrorRecovery(ERROR_CODE.FOR, "(2)"); RESULT = Tab.noObj; :}
 						;
 
-Condition ::= CondTerm CondTermList	;
+Condition ::= CondTerm 
+				|
+				CondTerm OR CondTermList 
+				;
 
-CondTermList ::= CondTermList OR CondTerm
+CondTermList ::= CondTerm OR CondTermList
 					|
-					/* epsilon */
+					CondTerm  
 					;
 					
-CondTerm ::= CondFact CondFactList;
+CondTerm ::= CondFact 
+				|
+				CondFact AND CondFactList
+				;
 
-CondFactList ::= CondFactList AND CondFact
+CondFactList ::= CondFact AND CondFactList 
 					|
-					/* epsilon */
+					CondFact
 					;
 					
-CondFact ::= Expr RelOpExprList ;
+CondFact ::= Expr:exp
+				{:
+					if(exp.getType() != boolType) {
+						parser.semantic_error("expression in condition must be of boolean type.", expleft);
+					}
+				:}
+				|
+				Expr:exp1 RelOp Expr:exp2
+				{: boolean isOk = isRelOpCompatible(exp1.getType(), exp2.getType(), exp1left); :}
+				;
 
-RelOpExprList ::= RelOp Expr
-					|
-					/* epsilon */
-					;
-
-RelOp ::= EQUALITY | NOT_EQUAL | GREATER | GREATER_EQUAL | LESS | LESS_EQUAL ;		
+RelOp ::= EQUALITY {: isClassAndArrayCompatibleRelOp = true; :} 
+			|
+			NOT_EQUAL {: isClassAndArrayCompatibleRelOp = true; :} 
+			|
+			GREATER {: isClassAndArrayCompatibleRelOp = false; :} 
+			|
+			GREATER_EQUAL {: isClassAndArrayCompatibleRelOp = false; :}
+			|
+			LESS {: isClassAndArrayCompatibleRelOp = false; :}
+			|
+			LESS_EQUAL {: isClassAndArrayCompatibleRelOp = false; :}
+			;
 
 DesignatorStatement ::= Designator:des AssignOp Expr:exp
-						{: RESULT = areCompatibleTypes(des.getType(), exp.getType(), expleft) ? des.getType() : Tab.noType; :}
+						{: RESULT = areCompatibleTypes(des, exp, true, expleft) ? des.getType() : Tab.noType; :}
 						|
 						Designator AssignOp error
 						{: parser.trackSyntaxErrorRecovery(ERROR_CODE.ASSIGN, "(1)"); RESULT = Tab.noType; :}
@@ -1200,7 +1257,8 @@ Term ::= Factor:fac MulOpLeft {: hasUsedLeftOperator = true; :} Term:term
 Factor ::= Designator:des ActParsListOptional:pars
 			{:
 				Obj result = Tab.noObj;
-				if(pars == null || isObjectMethod(des, desleft)) {
+				if((pars == null && isObjectVariable(des, desleft)) 
+				|| (pars != null && isObjectMethod(des, desleft))) {
 					result = des;
 				}
 				RESULT = result;

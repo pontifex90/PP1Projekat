@@ -1,25 +1,23 @@
 program test_303
-
-int f;
+const int asd  = 4;
 class Bla {
-	bool a;
+	int r;
 }
-class AAA extends Bla {
-int f;
-	{	int aa() {
-		}
-		int a() {
-			return true;
-		}
-	}
+
+class AA extends Bla {
+	
 }
+
 
 {
+	
 	int main()
-	Bla a; AAA dd;
+	int b;
+	AA a;
 	{
-		a = dd;
-		return 3;
+		if(a.r == b) {
+		
+		}
 	}
 }
 
