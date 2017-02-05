@@ -125,7 +125,7 @@ parser code {:
 		    	
 			case ERROR:
 		    	log.error(msg.toString());
-		    	allErrorMessages += "\n\t\t\t" + msg.toString();
+		    	allErrorMessages += "\n\t\t\t\t" + msg.toString();
 		    	
 		    	wasParsingSuccessful = false;
 		    	break;
@@ -240,6 +240,7 @@ action code {:
 	private static final String SUPER_DOT = "super.";
 	
 	public static final String CLASS_COMPATIBILITY_PREFIX = "c0mp@tib13_c11@s_";
+	public static final String STATIC_METHOD_PREFIX = "st@t1c_m3th0d_";
 	public static final Struct boolType = new Struct(Struct.Bool);
 		
 	Struct currentType = Tab.noType;
@@ -268,6 +269,15 @@ action code {:
 			return "formal parameter";
 		}
 		
+		if(parser.isClassContext) {
+			currentObject = Tab.currentScope.getOuter().getOuter().findSymbol(identifier);
+			
+			boolean isInClassScope = currentObject != null;
+			if(isInClassScope) {
+				return "class";
+			}
+		}
+		
 		return "global";
 	}
 	
@@ -291,7 +301,7 @@ action code {:
 	
 	private boolean isObjectMethod(Obj object, int line) {
 		boolean isMethod = object.getKind() == Obj.Meth;
-		if(!isMethod) {
+		if(!isMethod && object != Tab.noObj) {
 			parser.semantic_error("tried to use a field \"" + object.getName() + "\" as a method.", line);
 		}
 		
@@ -406,7 +416,7 @@ action code {:
 					break;
 					
 				case Obj.Meth:
-					objectKind = "global method";
+					objectKind = getContextStringForUsage(identifier) + " method";
 					break;
 				
 				case Obj.Fld:
@@ -414,7 +424,7 @@ action code {:
 					break;
 				
 				case Obj.Type:
-					parser.semantic_error("tried to use class name ("+ identifier +") as a variable name", line);
+					parser.usage_info(result, "static member of \"" + identifier + "\" class used.", line);
 					break;
 				
 				default:
@@ -457,14 +467,14 @@ action code {:
 			}
 		} else {
 			// If function is called as "someObject.identifier" search among class object members.
-			Collection<Obj> symbols = classObj.getType().getMembers();
-			result = findSymbolWithName(symbols, identifier);
+			result = getClassMemberFromSymbols(classObj.getType().getMembers(), identifier);
 			
-			String ident = identifier;
-			// Check if field is in supper class.
-			for(int retry = 10; retry > 0 && result == Tab.noObj; retry--) {
-				ident = SUPER_DOT + ident;
-				result = findSymbolWithName(symbols, ident);
+			// Make sure that only static methods can be called outside of class.
+			if(classObj.getKind() == Obj.Type) {
+				if(result.getKind() != Obj.Meth || !isMethodStatic(classObj, identifier)) {
+					parser.semantic_error("only static methods can be used in this context.", line);
+					return Tab.noObj;
+				}
 			}
 		}
 		if(result == Tab.noObj) {
@@ -481,6 +491,23 @@ action code {:
 			}
 			
 			parser.usage_info(result, "class " + memberType + " \"" + identifier + "\" of class instance \"" + classObj.getName() + "\" used.", line);
+		}
+		
+		return result;
+	}
+	
+	private boolean isMethodStatic(Obj classObject, String identifier) {
+		Obj staticMethodObject = getClassMemberFromSymbols(classObject.getType().getMembers(), STATIC_METHOD_PREFIX + identifier);
+		return staticMethodObject != Tab.noObj;
+	}
+	
+	private Obj getClassMemberFromSymbols(Collection<Obj> symbols, String identifier) {
+		Obj result = findSymbolWithName(symbols, identifier);
+		
+		// Check if field is in supper class.
+		for(int retry = 10; retry > 0 && result == Tab.noObj; retry--) {
+			identifier = SUPER_DOT + identifier;
+			result = findSymbolWithName(symbols, identifier);
 		}
 		
 		return result;
@@ -568,16 +595,30 @@ action code {:
 			parser.semantic_error("main method must have void as a return type.", line);
 			return Tab.noObj;
 		} 
-		// Only class methods can be static.
-		else if(parser.isStaticContext && !parser.isClassContext)
-		{
-			parser.semantic_error("global methods can't be static.", line);
-			return Tab.noObj;
-		} 
+		
 		// Check if some symbol with same name already exist.
 		if(doesSymbolAlreadyExist(name, line)){
 			return Tab.noObj;
 		}
+		
+		// Check if parent class has static method with the same name.
+		if(isMethodStatic(parser.currentClass, name)) {
+			parser.semantic_error("static methods cannot be overriden.", line);
+			return Tab.noObj;
+		}
+		
+		// Static methods.
+		if(parser.isStaticContext)
+		{
+			// Only class methods can be static.
+			if(!parser.isClassContext) {
+				parser.semantic_error("global methods can't be static.", line);
+				return Tab.noObj;
+			}
+			
+			// Add dummy variable so we can track static methods.
+			Tab.insert(Obj.Var, STATIC_METHOD_PREFIX + name, Tab.noType);
+		} 
 				
 		Struct methodType = isVoidMethod ? Tab.noType : currentType;
 		return insertToTable(SYMBOL_TYPE.METHOD, name, methodType, line);	

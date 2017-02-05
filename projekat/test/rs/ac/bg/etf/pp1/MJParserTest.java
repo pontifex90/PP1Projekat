@@ -37,7 +37,7 @@ public class MJParserTest {
 	        //Tab.dump();
 	        
 	        if(!p.wasParsingSuccessful) {
-	        	log.error(p.allErrorMessages);
+	        	log.error("All error messages follow:" + p.allErrorMessages);
 	        	log.error("Parsing finished with ERRORS!");
 	        } else {
 	        	log.info("Parsing finished successfully!");
