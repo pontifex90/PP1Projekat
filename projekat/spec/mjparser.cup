@@ -451,7 +451,7 @@ action code {:
 		return result;
 	}
 		
-	private Obj findClassMemberWithName(Obj classObj, String identifier, int line) {
+	private Obj findClassMemberWithName(Obj classObj, String identifier, boolean isCalledAsThis, int line) {
 		Obj result = Tab.noObj;
 		
 		if(classObj == null) {
@@ -464,7 +464,7 @@ action code {:
 			return result;
 		}
 		
-		if(!parser.isStaticContext && classObj == parser.currentClass) {
+		if(isCalledAsThis) {
 			// If function is called as "this.identifier", that means we are in a class method and we have to search identifier in class context
 			// (we have to skip methods and formal parameters contexts).
 			Scope classScope = Tab.currentScope.getOuter().getOuter();
@@ -476,16 +476,27 @@ action code {:
 				ident = SUPER_DOT + ident;
 				result = classScope.findSymbol(ident);
 			}
+			
+			if(isStaticMethod(classObj, identifier)) {
+				parser.semantic_error("static methods cannot be used with \"this\".", line);
+				return Tab.noObj;
+			}
 		} else {
 			// If function is called as "someObject.identifier" search among class object members.
 			result = getClassMemberFromSymbols(classObj.getType().getMembers(), identifier);
 			
 			// Make sure that only static methods can be called outside of class.
+			// Usage "SomeClass.someStaticMethod()".
 			if(classObj.getKind() == Obj.Type) {
 				if(result.getKind() != Obj.Meth || !isStaticMethod(classObj, identifier)) {
 					parser.semantic_error("only static methods can be used in this context.", line);
 					return Tab.noObj;
 				}
+			} else if(isStaticMethod(classObj, identifier)){
+				// Static methods must be used as "SomeClass.someStaticMethod()" 
+				// or only as identifier (if in static context - then findObjectWithName is called)
+				parser.semantic_error("static methods must be used as SomeClassName.staticMethod().", line);
+				return Tab.noObj;
 			}
 		}
 		if(result == Tab.noObj) {
@@ -537,7 +548,7 @@ action code {:
 		if(!parser.isClassContext) {
 			parser.semantic_error("tried to use \"this\" outside of class. (" + identifier + ")", line);
 		} else if(parser.isStaticContext) {
-			parser.semantic_error("tried to use \"this\" in static function. (" + identifier + ")", line);
+			parser.semantic_error("tried to use \"this\" in a static function. (" + identifier + ")", line);
 		}
 		
 		return parser.isClassContext && !parser.isStaticContext;
@@ -791,18 +802,18 @@ VarDecl ::=	Type:varType VarsElementsList SEMI
 			
 			|
 			Type error SEMI
-			{: parser.trackSyntaxErrorRecovery(ERROR_CODE.VARIABLE, "(3)"); :}				
+			{: parser.trackSyntaxErrorRecovery(ERROR_CODE.VARIABLE, "(3)"); RESULT = Tab.noObj; :}				
 			;
  
 VarsElementsList ::= VarsElementsList COMMA OneVar
  						|
  						error COMMA OneVar
- 						{: parser.trackSyntaxErrorRecovery(ERROR_CODE.VARIABLE, "(1)"); :}
+ 						{: parser.trackSyntaxErrorRecovery(ERROR_CODE.VARIABLE, "(1)"); RESULT = Tab.noObj; :}
  						|
  						OneVar
  						|
  						error OneVar
- 						{: parser.trackSyntaxErrorRecovery(ERROR_CODE.VARIABLE, "(2)"); :}
+ 						{: parser.trackSyntaxErrorRecovery(ERROR_CODE.VARIABLE, "(2)"); RESULT = Tab.noObj; :}
  						;
  
 OneVar ::= IDENT:varName
@@ -886,7 +897,7 @@ ClassExtender ::= EXTENDS Type:parentClassObject
 					:} 
 					|
 					error
-					{: parser.trackSyntaxErrorRecovery(ERROR_CODE.EXTENDS, "(1)"); :}
+					{: parser.trackSyntaxErrorRecovery(ERROR_CODE.EXTENDS, "(1)"); RESULT = Tab.noObj; :}
 					|
 					/* epsilon */
 					;
@@ -943,7 +954,7 @@ FormPars ::= {: parser.isFormalParametersContext = true; // Starting form pars c
 				/* epsilon */
 				|
 				error
-				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.FORMAL_PARAMETERS, "(1)"); :}		
+				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.FORMAL_PARAMETERS, "(1)"); RESULT = Tab.noObj; :}		
 				;
 
 FormParsList ::= FormParsList COMMA Type OneVar
@@ -1000,18 +1011,18 @@ OptionalDesignatorStatement ::= DesignatorStatement
 								/* epsilon */
 								|
 								error
-								{: parser.trackSyntaxErrorRecovery(ERROR_CODE.FOR, "(1)"); :}
+								{: parser.trackSyntaxErrorRecovery(ERROR_CODE.FOR, "(1)"); RESULT = Tab.noObj; :}
 								;
 				
 IfStatement ::= IF L_PAREN Condition R_PAREN Statement
 				|
 				IF L_PAREN error R_PAREN Statement
-				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.IF, "(1)"); :}
+				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.IF, "(1)"); RESULT = Tab.noObj; :}
 				|
 				IF L_PAREN Condition R_PAREN Statement ELSE Statement
 				|
 				IF L_PAREN error R_PAREN Statement ELSE Statement
-				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.IF, "(2)"); :}
+				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.IF, "(2)"); RESULT = Tab.noObj; :}
 				;
 
 OptionalCondition ::= Condition
@@ -1019,7 +1030,7 @@ OptionalCondition ::= Condition
 						/* epsilon */
 						|
 						error
-						{: parser.trackSyntaxErrorRecovery(ERROR_CODE.FOR, "(2)"); :}
+						{: parser.trackSyntaxErrorRecovery(ERROR_CODE.FOR, "(2)"); RESULT = Tab.noObj; :}
 						;
 
 Condition ::= CondTerm CondTermList	;
@@ -1049,7 +1060,7 @@ DesignatorStatement ::= Designator:des AssignOp Expr:exp
 						{: RESULT = areCompatibleTypes(des.getType(), exp.getType(), expleft) ? des.getType() : Tab.noType; :}
 						|
 						Designator AssignOp error
-						{: parser.trackSyntaxErrorRecovery(ERROR_CODE.ASSIGN, "(1)"); :}
+						{: parser.trackSyntaxErrorRecovery(ERROR_CODE.ASSIGN, "(1)"); RESULT = Tab.noType; :}
 						|
 						Designator:des L_PAREN ActParsList R_PAREN
 						{: 
@@ -1073,12 +1084,12 @@ Designator ::= IDENT:identifier
 				THIS DOT IDENT:identifier
 				{:
 					RESULT = isThisAvailable(identifier, identifierleft) 
-								? findClassMemberWithName(parser.currentClass, identifier, identifierleft)
+								? findClassMemberWithName(parser.currentClass, identifier, true, identifierleft)
 								: Tab.noObj;
 				:}
 				|
 				Designator:des DOT IDENT:identifier
-				{: RESULT = findClassMemberWithName(des, identifier, identifierleft); :}
+				{: RESULT = findClassMemberWithName(des, identifier, false, identifierleft); :}
 				|
 				Designator:des L_INDEXER Expr:exp R_INDEXER
 				{:
@@ -1094,7 +1105,7 @@ Designator ::= IDENT:identifier
 				:}
 				|
 				Designator L_INDEXER error R_INDEXER
-				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.INDEXING, "(1)"); :}
+				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.INDEXING, "(1)"); RESULT = Tab.noObj; :}
 				
 				/*
 				// Super is not defined by specification.
@@ -1112,7 +1123,7 @@ SuperDesignator ::= SUPER DOT SuperDesignator
 ActParsList ::= ActPars
 				|
 				error
-				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.PARAMETERS, "(1)"); :}
+				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.PARAMETERS, "(1)"); RESULT = Tab.noObj;  :}
 				|
 				/* epsilon */
 				;

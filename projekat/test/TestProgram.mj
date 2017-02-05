@@ -1,33 +1,33 @@
 //Test 303
 
 program test_303
-
-int a;
-
-class Predmet 
-{
-{
-	
-	static void asd() 
+class A {
 	{
+		static void Lele() {
 		
-	}
-	
-	void as() {
-		asd();
+		}
 	}
 }
+class Bla {
+	int a;
+	{
+		static void aaa(){
+			
+		}
+		
+		void b() {
+			b();
+		}
+	}
 }
+ 
 
 {
-	void as() {
-		Predmet.asd();
-	}
+	int aa() {}
 	void main()
-	Predmet a;
+	int a[]; Bla b;
 	{
-	Predmet.asd();
-	as();
+		b.b();
 	}
 }
 
