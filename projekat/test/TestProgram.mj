@@ -12,14 +12,16 @@ class BBB extends AAA {
 
 
 {
-
-	int as(int d, AAA s, bool dd, char ass) {
+	bool as2() {}
+	bool as(int d, AAA s, bool dd, char ass) {
 	}
 	void main(int a)
 	int a; 
 	BBB b;
 	{
-		
+		for(main(3);as2(); b.r=2) {
+	continue;
+		}
 	}
 }
 

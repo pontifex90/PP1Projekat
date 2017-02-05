@@ -64,6 +64,7 @@ parser code {:
 	boolean isMethodContext = false;
 	boolean isStaticContext = false;
 	boolean isFormalParametersContext = false;
+	boolean isForContext = false;
 	Obj currentMethodObject = Tab.noObj;
 	Obj currentClass = Tab.noObj;
 	Scope currentClassScope = null;
@@ -280,6 +281,12 @@ action code {:
 		}
 		
 		return "global";
+	}
+	
+	private void breakContinueCheck(int line) {
+		if(!parser.isForContext) {
+			parser.semantic_error("break/continue can be used only inside the for loop.", line);
+		}
 	}
 	
 	private boolean checkIfObjIsArray(Obj object, int line) {
@@ -1063,9 +1070,11 @@ Statement ::= DesignatorStatement SEMI
 				|
 				ForStatement
 				|
-				BREAK SEMI
+				BREAK SEMI:s
+				{: breakContinueCheck(sleft); :}
 				|
-				CONTINUE SEMI
+				CONTINUE SEMI:s
+				{: breakContinueCheck(sleft); :}
 				|
 				Return:ret
 				{:
@@ -1116,7 +1125,10 @@ Return ::= RETURN SEMI:s
 			:}
 			;
 				
-ForStatement ::= FOR L_PAREN OptionalDesignatorStatement SEMI OptionalCondition SEMI OptionalDesignatorStatement R_PAREN Statement ;
+ForStatement ::={: parser.isForContext = true; :} 
+				FOR L_PAREN OptionalDesignatorStatement SEMI OptionalCondition SEMI OptionalDesignatorStatement R_PAREN Statement 
+				{: parser.isForContext = false; :}
+				;
 				
 OptionalDesignatorStatement ::= DesignatorStatement
 								|
