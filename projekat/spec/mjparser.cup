@@ -90,8 +90,7 @@ parser code {:
   	public void usage_info(Obj usedObject, String message, int line) {
   		String visitorMessage = "";
   		if(usedObject != null) {
-  		// ivansm fix this
-	  		//DumpSymbolTableVisitor visitor = new DumpSymbolTableVisitor();
+	  		DumpSymbolTableVisitor visitor = new DumpSymbolTableVisitor();
 			//visitor.visitObjNode(usedObject);
 			//visitorMessage = " [ " + visitor.getOutput() + "]"; 
 		}
@@ -103,10 +102,10 @@ parser code {:
 	}
 	
 	public void log_symbol_detected(Obj object, String message, int line) {
-		//DumpSymbolTableVisitor visitor = new DumpSymbolTableVisitor();
-		//visitor.visitObjNode(object);
+		DumpSymbolTableVisitor visitor = new DumpSymbolTableVisitor();
+		visitor.visitObjNode(object);
         
- 		semantic_info(message + " [ " + "IVAN" + "]", line);
+ 		semantic_info(message + " [ " + visitor.getOutput() + "]", line);
 	}
 	
     public void report(String message, Object info, LOG_TYPE logType) {
@@ -240,6 +239,7 @@ init with {:
 action code {:
 	private static final String SUPER_DOT = "super.";
 	
+	public static final String CLASS_COMPATIBILITY_PREFIX = "c0mp@tib13_c11@s_";
 	public static final Struct boolType = new Struct(Struct.Bool);
 		
 	Struct currentType = Tab.noType;
@@ -248,7 +248,14 @@ action code {:
 	boolean hasUsedLeftOperator = false;
 	
 	// Semantic methods
-
+	
+	// We have to manually link everything to class scope because of usage before last class chaining.
+	// For example if class has a variable of that class type.
+	private void ChainClassScope () {
+		parser.currentClass.getType().setMembers(parser.currentClassScope.getLocals());
+	}
+	
+	
 	private String getContextStringForUsage(String identifier) {
 		Obj currentObject = Tab.currentScope.findSymbol(identifier);
 		boolean isInCurrentScope = currentObject != null;
@@ -294,12 +301,34 @@ action code {:
 	private boolean areCompatibleTypes(Struct type1, Struct type2, int line) {
 		if(type1 == Tab.noType || type2 == Tab.noType) { return false; }
 		
-		boolean areCompatible = type1.compatibleWith(type2);
+		boolean areCompatible = type1.compatibleWith(type2) || 
+			(type1.getKind() == Struct.Class && type2.getKind() == Struct.Class && areClassesCompatible(type1, type2) && areClassesCompatible(type1, type2));
+		 
 		if(!areCompatible) {
 			parser.semantic_error("incompatible types.", line);
 		}
 	
 		return areCompatible;
+	}
+	
+	private boolean areClassesCompatible(Struct type1, Struct type2) {
+		// Go through all members and see if other type has a "parent" member.
+		for(Obj fld1 : type1.getMembers()) {
+			if(!fld1.getName().startsWith(CLASS_COMPATIBILITY_PREFIX)) { continue; }
+			
+			for(Obj fld2 : type2.getMembers()) {
+				if(!fld2.getName().startsWith(CLASS_COMPATIBILITY_PREFIX)) { continue; }
+				
+	  			if(fld1.getName().equals(fld2.getName()) || fld2.getName().equals(fld1.getName())) {
+	  				return true;
+	  			}
+	  		}
+		}
+		return false;
+	}
+	
+	private void addClassCompatibilityVar(String className) {
+		Tab.insert(Obj.Var, CLASS_COMPATIBILITY_PREFIX + className, Tab.noType);
 	}
 	
 	private boolean isAssignableToInt(Obj object, int line) {
@@ -613,7 +642,7 @@ action code {:
 		parser.log_symbol_detected(createdObject, message, line);
 		
 		if(parser.isClassContext && symbolType != SYMBOL_TYPE.CLASS) {
-			parser.currentClass.getType().setMembers(parser.currentClassScope.getLocals());
+			ChainClassScope();
 		}
 		
 		return createdObject;
@@ -637,8 +666,8 @@ non terminal AssignOp, AddOpRight, AddOpLeft, MulOpRight, MulOpLeft, IfStatement
 non terminal Condition, CondTerm, CondTermList, CondFact, CondFactList, RelOp, RelOpExprList ; 
 non terminal Return, NumbersList, OneNumber, StatementsList, OpenScope, CloseScope ;
 
-non terminal Obj ProgName, OneConst, MethodName, Designator, Type, Factor, NewArrayType, Term, TermList, ClassExtender ;
-non terminal Struct Expr, ClassName, ActParsListOptional, DesignatorStatement ;
+non terminal Obj ProgName, Expr, OneConst, MethodName, Designator, Type, Factor, NewArrayType, Term, TermList, ClassExtender ;
+non terminal Struct ClassName, ActParsListOptional, DesignatorStatement ;
 
 precedence left ELSE;
 
@@ -762,12 +791,17 @@ Type ::= IDENT:typeName
 ClassDecl ::= CLASS ClassName:c ClassExtender:parentClassObject 
 				{:
 					if(parentClassObject != null) {
+						// Set dummy var so we can track all parents.
+						addClassCompatibilityVar(parentClassObject.getName());
+					
 						// Add all parent class members.
 						for(Obj member : parentClassObject.getType().getMembers()) {
-								//if(!o.getName().equals("@vtable")) {
-								Obj n = Tab.insert(member.getKind(), SUPER_DOT + member.getName(), member.getType());
-								n.setAdr(member.getAdr());
-							//}
+							if(member.getName().startsWith(CLASS_COMPATIBILITY_PREFIX)) { 
+								addClassCompatibilityVar(member.getName().substring(CLASS_COMPATIBILITY_PREFIX.length()));
+							} else {
+								Obj copiedObj = Tab.insert(member.getKind(), SUPER_DOT + member.getName(), member.getType());
+								copiedObj.setAdr(member.getAdr());
+							}
 						}
 					}
 				:}
@@ -785,13 +819,14 @@ ClassName ::= IDENT:className
 					parser.currentClass = addClassTypeToSymbolTable(className, classNameleft);
 					Tab.openScope();
 					parser.currentClassScope = Tab.currentScope();
-					// We have to manually link everything to class scope because of usage before last class chaining.
-					// For example if class has a variable of that class type.  
-					parser.currentClass.getType().setMembers(parser.currentClassScope.getLocals());
+					// Set dummy var so we can track all parents.
+					addClassCompatibilityVar(className);
+					
+					ChainClassScope();
 					RESULT = parser.currentClass.getType();
 				:}
 				;
-
+				
 ClassExtender ::= EXTENDS Type:parentClassObject
 					{: 
 						isClassExtensionValid(parentClassObject.getType(), parentClassObjectleft);
@@ -959,7 +994,7 @@ RelOpExprList ::= RelOp Expr
 RelOp ::= EQUALITY | NOT_EQUAL | GREATER | GREATER_EQUAL | LESS | LESS_EQUAL ;		
 
 DesignatorStatement ::= Designator:des AssignOp Expr:exp
-						{: RESULT = areCompatibleTypes(des.getType(), exp, expleft) ? des.getType() : Tab.noType; :}
+						{: RESULT = areCompatibleTypes(des.getType(), exp.getType(), expleft) ? des.getType() : Tab.noType; :}
 						|
 						Designator AssignOp error
 						{: parser.trackSyntaxErrorRecovery(ERROR_CODE.ASSIGN, "(1)"); :}
@@ -995,7 +1030,7 @@ Designator ::= IDENT:identifier
 				|
 				Designator:des L_INDEXER Expr:exp R_INDEXER
 				{:
-					boolean isArrayAndHasValidIndexingType = isIndexingTypeValid(exp, expleft) && checkIfObjIsArray(des, desleft);  
+					boolean isArrayAndHasValidIndexingType = isIndexingTypeValid(exp.getType(), expleft) && checkIfObjIsArray(des, desleft);  
 					
 					Obj result = Tab.noObj;
 					if (isArrayAndHasValidIndexingType) {
@@ -1037,7 +1072,7 @@ ActPars ::= ActPars COMMA Expr
 
 Expr ::= Negation TermList:termList
 			{:
-				RESULT = termList.getType();
+				RESULT = termList;
 				hasUsedLeftOperator = false; 
 			:}
 			;
@@ -1078,7 +1113,7 @@ Factor ::= Designator:des ActParsListOptional:pars
 			{: RESULT = instantiateNewObject(typeObject, arrayObject, arrayObjectleft); :}
 			|
 			L_PAREN Expr:exp R_PAREN 
-			{: RESULT = new Obj(Obj.NO_VALUE, "", exp); :}
+			{: RESULT = new Obj(Obj.NO_VALUE, "", exp.getType()); :}
 			;
 
 ActParsListOptional ::= L_PAREN ActParsList R_PAREN
@@ -1088,7 +1123,7 @@ ActParsListOptional ::= L_PAREN ActParsList R_PAREN
 						;
 
 NewArrayType ::= L_INDEXER Expr:exp R_INDEXER
-					{: RESULT = isIndexingTypeValid(exp, expleft) ? new Obj(Obj.NO_VALUE, "", new Struct(Struct.Array, currentType)) : Tab.noObj; :}
+					{: RESULT = isIndexingTypeValid(exp.getType(), expleft) ? new Obj(Obj.NO_VALUE, "", new Struct(Struct.Array, currentType)) : Tab.noObj; :}
 					|
 					/* epsilon */
 					; 
