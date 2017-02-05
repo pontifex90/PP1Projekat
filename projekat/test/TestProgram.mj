@@ -1,23 +1,25 @@
+//Test 303
+
 program test_303
-const int asd  = 4;
-class Bla {
+
+class AAA{
 	int r;
 }
 
-class AA extends Bla {
-	
+class BBB extends AAA {
+	int r;
 }
 
 
 {
-	
-	int main()
-	int b;
-	AA a;
+
+	int as(int d, AAA s, bool dd, char ass) {
+	}
+	void main(int a)
+	int a; 
+	BBB b;
 	{
-		if(a.r == b) {
 		
-		}
 	}
 }
 

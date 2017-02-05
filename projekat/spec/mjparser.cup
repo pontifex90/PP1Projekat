@@ -1,7 +1,7 @@
 package rs.ac.bg.etf.pp1;
 
 import java_cup.runtime.*;
-import java.util.Collection;
+import java.util.*;
 import org.apache.log4j.*;
 import rs.ac.bg.etf.pp1.MJParser.ERROR_CODE;
 import rs.ac.bg.etf.pp1.MJParser.SYMBOL_TYPE;
@@ -300,6 +300,24 @@ action code {:
 		return isValid;
 	}
 	
+	private boolean hasMethodAppropriateParams(Obj methodObject, Stack<Struct> actualParams, int line) {
+		// Check number of parameters.
+		if(methodObject.getLevel() != actualParams.size()) {
+			parser.semantic_error("invalid number of parameters for method \"" + methodObject.getName() + "\".", line);
+			return false;
+		}
+		
+		// Check type of every parameter.
+		for(Obj param : methodObject.getLocalSymbols()) {
+   			if(!areCompatibleTypes(param.getType(), actualParams.pop(), line)) {
+   				parser.semantic_error("formal (\"" + param.getName() + "\") and actual parameter types mismatch.", line);
+   				return false;
+   			}
+   		}
+   		
+   		return true;
+	}
+	
 	private boolean isObjectMethod(Obj object, int line) {
 		boolean isMethod = object.getKind() == Obj.Meth;
 		if(!isMethod && object != Tab.noObj) {
@@ -335,6 +353,11 @@ action code {:
 		return isCompatible;
 	}
 	
+	private boolean areCompatibleTypes(Struct type1, Struct type2, int line) {
+		return areCompatibleTypes(new Obj(Obj.Var, "", type1), new Obj(Obj.Var, "", type2), false, line);
+	}
+	
+	// First is destination type and second is source.
 	private boolean areCompatibleTypes(Obj typeObj1, Obj typeObj2, boolean shouldCheckMethod, int line) {
 		if(typeObj1.getKind() == Obj.Con || typeObj1.getKind() == Obj.Type || typeObj1.getKind() == Obj.Prog 
 			|| (shouldCheckMethod && typeObj1.getKind() == Obj.Meth)) {
@@ -775,15 +798,16 @@ terminal Character CHAR ;
 terminal Boolean BOOL ;
 
 non terminal Program, ProgramElementsList, MethodDecl, ProgramElement, ConstDecl, VarDecl, ClassDecl ;
-non terminal ConstList, VarsElementsList, OneVar, StaticDeclarator, VoidType, FormPars, Statement, FormParsList ;
+non terminal ConstList, VarsElementsList, OneVar, StaticDeclarator, VoidType, Statement ;
 non terminal MethodsSection, MethodsList, VarsList, ForStatement, OptionalDesignatorStatement, OptionalCondition ;
-non terminal ActParsList, ActPars, Negation ;
 non terminal AssignOp, AddOpRight, AddOpLeft, MulOpRight, MulOpLeft, IfStatement ;
-non terminal Condition, CondTerm, CondTermList, CondFact, CondFactList ; 
+non terminal Condition, CondTerm, CondTermList, CondFact, CondFactList, Negation ; 
 non terminal NumbersListOptional, NumbersList, StatementsList, OpenScope, CloseScope, RelOp ;
 
 non terminal Obj ProgName, Expr, OneConst, MethodName, Designator, Type, Factor, NewArrayType, Term, TermList, ClassExtender ;
-non terminal Struct ClassName, ActParsListOptional, DesignatorStatement, Return ;
+non terminal Struct ClassName, DesignatorStatement, Return ;
+non terminal Integer FormPars, FormParsList ;
+non terminal Stack<Struct> ActParsList, ActPars, ActParsListOptional ;
 
 precedence left ELSE;
 
@@ -971,12 +995,17 @@ MethodsList ::= MethodsList MethodDecl
 				; 
 
 MethodDecl ::= {: parser.isMethodContext = true; // Starting method context :}
-				StaticDeclarator VoidType MethodName:m OpenScope L_PAREN FormPars R_PAREN OpenScope VarsList L_BRACE StatementsList R_BRACE CloseScope
+				StaticDeclarator VoidType MethodName:met OpenScope L_PAREN FormPars:numOfPars R_PAREN 
+				{: 
+					met.setLevel(numOfPars);
+					Tab.chainLocalSymbols(met); // Hack to enable recursion. 
+				:} 
+				OpenScope VarsList L_BRACE StatementsList R_BRACE CloseScope
 				{: 
 					parser.currentMethodObject = Tab.noObj;
 					parser.incrementMethodsCount();
 					parser.isMethodContext = false; // Closing method context
-					Tab.chainLocalSymbols(m); 
+					Tab.chainLocalSymbols(met); 
 				:}
 				CloseScope
 				;
@@ -1002,20 +1031,30 @@ VoidType ::= Type
 				;
 
 FormPars ::= {: parser.isFormalParametersContext = true; // Starting form pars context :}
-				FormParsList
-				{: parser.isFormalParametersContext = false; // Starting form pars context :}
+				FormParsList:numOfElements
+				{:
+					parser.isFormalParametersContext = false; // Starting form pars context
+					RESULT = numOfElements; 
+				:}
 				|
 				/* epsilon */
+				{: RESULT = 0; :}
 				|
 				error
-				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.FORMAL_PARAMETERS, "(1)"); RESULT = Tab.noObj; :}		
+				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.FORMAL_PARAMETERS, "(1)"); :}		
 				;
 
-FormParsList ::= FormParsList COMMA Type OneVar
-					{: parser.functionFormParsCount++; :}
+FormParsList ::= FormParsList:n COMMA Type OneVar
+					{: 
+						parser.functionFormParsCount++;
+						RESULT = n + 1;
+					:}
 					|
 					Type OneVar
-					{: parser.functionFormParsCount++; :}
+					{:
+						parser.functionFormParsCount++;
+						RESULT = 1; 
+					:}
 					;
 
 Statement ::= DesignatorStatement SEMI
@@ -1156,13 +1195,13 @@ DesignatorStatement ::= Designator:des AssignOp Expr:exp
 						Designator AssignOp error
 						{: parser.trackSyntaxErrorRecovery(ERROR_CODE.ASSIGN, "(1)"); RESULT = Tab.noType; :}
 						|
-						Designator:des L_PAREN ActParsList R_PAREN
+						Designator:des L_PAREN ActParsList:params R_PAREN
 						{: 
 							if(parser.isMainMethod()) {
 								parser.mainMethodFunctionCallsCount++;
 							}
 							
-							RESULT = isObjectMethod(des, desleft) ? des.getType() : Tab.noType; 
+							RESULT = isObjectMethod(des, desleft) && hasMethodAppropriateParams(des, params, desleft) ? des.getType() : Tab.noType; 
 						:}
 						|
 						Designator:des INCREMENT
@@ -1214,17 +1253,28 @@ SuperDesignator ::= SUPER DOT SuperDesignator
 					;
 */
 
-ActParsList ::= ActPars
+ActParsList ::= ActPars:pars
+				{: RESULT = pars; :}
 				|
 				error
-				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.PARAMETERS, "(1)"); RESULT = Tab.noObj;  :}
+				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.PARAMETERS, "(1)"); :}
 				|
 				/* epsilon */
+				{: RESULT =  new Stack<Struct>(); :}
 				;
 				
-ActPars ::= ActPars COMMA Expr
+ActPars ::= Expr:exp COMMA ActPars:pars 
+			{:
+				pars.push(exp.getType());
+				RESULT = pars; 
+			:}
 			|
-			Expr								
+			Expr:exp
+			{:
+				Stack<Struct> actualParamsStack = new Stack<Struct>();
+				actualParamsStack.push(exp.getType());
+				RESULT = actualParamsStack;
+			:}
 			;
 
 Expr ::= Negation TermList:termList
@@ -1254,11 +1304,11 @@ Term ::= Factor:fac MulOpLeft {: hasUsedLeftOperator = true; :} Term:term
 				{: RESULT = fac; :}
 				;
 
-Factor ::= Designator:des ActParsListOptional:pars
+Factor ::= Designator:des ActParsListOptional:params
 			{:
 				Obj result = Tab.noObj;
-				if((pars == null && isObjectVariable(des, desleft)) 
-				|| (pars != null && isObjectMethod(des, desleft))) {
+				if((params == null && isObjectVariable(des, desleft)) 
+				|| (params != null && isObjectMethod(des, desleft) && hasMethodAppropriateParams(des, params, desleft))) {
 					result = des;
 				}
 				RESULT = result;
@@ -1274,8 +1324,8 @@ Factor ::= Designator:des ActParsListOptional:pars
 			{: RESULT = new Obj(Obj.NO_VALUE, "", exp.getType()); :}
 			;
 
-ActParsListOptional ::= L_PAREN ActParsList R_PAREN
-						{: RESULT = Tab.noType; // just return anything so it's not null :}
+ActParsListOptional ::= L_PAREN ActParsList:pars R_PAREN
+						{: RESULT = pars; :}
 						|
 						/* epsilon */
 						;
