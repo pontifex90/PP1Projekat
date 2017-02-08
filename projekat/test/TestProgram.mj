@@ -1,27 +1,20 @@
 //Test 303
 
 program test_303
-
-class AAA{
-	int r;
-}
-
-class BBB extends AAA {
-	int r;
-}
-
-
+int a;
+char bbb;
 {
-	bool as2() {}
-	bool as(int d, AAA s, bool dd, char ass) {
+
+	void asd(int b, bool d, char g) {
+		a = b;
+		bbb = g;
 	}
-	void main(int a)
-	int a; 
-	BBB b;
-	{
-		for(main(3);as2(); b.r=2) {
-	continue;
-		}
+	void main()
+	{	
+		a = 2;
+		a *= 2;
+		
+		print(a);
 	}
 }
 

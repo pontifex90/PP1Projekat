@@ -5,6 +5,7 @@ import java.util.*;
 import org.apache.log4j.*;
 import rs.ac.bg.etf.pp1.MJParser.ERROR_CODE;
 import rs.ac.bg.etf.pp1.MJParser.SYMBOL_TYPE;
+import rs.etf.pp1.mj.runtime.Code;
 import rs.etf.pp1.symboltable.Tab;
 import rs.etf.pp1.symboltable.concepts.*;
 import rs.etf.pp1.symboltable.visitors.DumpSymbolTableVisitor;
@@ -86,6 +87,10 @@ parser code {:
   	
   	public void semantic_error(String message, int line) {
         report("Semantic error on line " + line + ": " + message, null, LOG_TYPE.ERROR);
+    }
+
+  	public void code_generation_error(String message, int line) {
+        report("Code generation error on line " + line + ": " + message, null, LOG_TYPE.ERROR);
     }
 
   	public void usage_info(Obj usedObject, String message, int line) {
@@ -793,6 +798,76 @@ action code {:
 		
 		return createdObject;
 	}
+	
+	// Code generation
+	private void generatePrintCall(Struct printingType, int line) {
+		if(printingType != Tab.intType && printingType != Tab.charType) { 
+			parser.code_generation_error("only char and int types can be printed.", line);
+		}
+		
+		// It is assumed that the thing we're printing is already on stack (ie. Factor ::= is responsible for that)
+		
+		if (printingType == Tab.intType) {
+			// Load message length.
+	  	 	Code.loadConst(5);
+	  	 	// Set code.
+	  	 	Code.put(Code.print);
+	  	}
+	  	 
+	  	if (printingType == Tab.charType) {
+	  		// Load message length.
+	  		Code.loadConst(1);
+	  		// Set code.
+	  	 	Code.put(Code.bprint);
+	  	}
+	}
+	
+	private void generateMethodStart(int localAndFormalVarsNumber) {
+		parser.currentMethodObject.setAdr(Code.pc);
+   		if (parser.isMainMethod()) {
+   			Code.mainPc = parser.currentMethodObject.getAdr();
+   		}
+   		Code.put(Code.enter);
+   		Code.put(parser.currentMethodObject.getLevel());
+   		Code.put(localAndFormalVarsNumber);
+	}
+	
+	private void generateMethodEnd() {
+		Code.put(Code.exit);
+	 	Code.put(Code.return_);
+	}
+	
+	private void generateMethodCall(Obj functionObject) {
+		int destAdr = functionObject.getAdr() - Code.pc;
+   	    Code.put(Code.call);
+   	    Code.put2(destAdr);
+   	    if (functionObject.getType() != Tab.noType) {
+    		Code.put(Code.pop);
+		}
+	}
+	
+	// Used in expressions like "method(a += 3)".
+	private void generateRightOperationForExpression(Obj destinationObject, int operationCode) {
+		// Do the operation.
+		Code.put(operationCode);
+		// Store value
+		Code.store(destinationObject);
+		// Push it back to stack so others can use it.
+		Code.load(destinationObject);
+	}
+	
+	// Used in designator statements like "a = 3;" or "a *= 5;".
+	private void generateAssignOperation(Obj destinationObject, int operationCode) {
+		// Check if "+=" or "*=" is called.
+		if(operationCode > 0) {
+			// First push designator to stack so we can do operation on it.
+			Code.load(destinationObject);
+			// Push operation. That will leave result on stack for store to pick it up.
+			Code.put(operationCode);
+		}
+		// Expr already set everything we need on stack. Just put to designator.
+		Code.store(destinationObject);
+	}
 :}
 
 terminal PROG, CLASS, THIS, CONST, EQUALS, L_BRACE, R_BRACE, L_PAREN, R_PAREN, SEMI, COMMA, L_INDEXER, R_INDEXER ;
@@ -807,15 +882,14 @@ terminal Boolean BOOL ;
 non terminal Program, ProgramElementsList, MethodDecl, ProgramElement, ConstDecl, VarDecl, ClassDecl ;
 non terminal ConstList, VarsElementsList, OneVar, StaticDeclarator, VoidType, Statement ;
 non terminal MethodsSection, MethodsList, VarsList, ForStatement, OptionalDesignatorStatement, OptionalCondition ;
-non terminal AssignOp, AddOpRight, AddOpLeft, MulOpRight, MulOpLeft, IfStatement ;
-non terminal Condition, CondTerm, CondTermList, CondFact, CondFactList, Negation ; 
-non terminal NumbersListOptional, NumbersList, StatementsList, OpenScope, CloseScope, RelOp ;
+non terminal Condition, CondTerm, CondTermList, CondFact, CondFactList, Negation, IfStatement ; 
+non terminal NumbersListOptional, NumbersList, StatementsList, OpenScope, CloseScope, RelOp, DesignatorStatement ;
 
 non terminal Obj ProgName, Expr, OneConst, MethodName, Designator, Type, Factor, NewArrayType, Term, TermList, ClassExtender ;
-non terminal Struct ClassName, DesignatorStatement, Return ;
+non terminal Struct ClassName, Return ;
 non terminal Integer FormPars, FormParsList ;
 non terminal Stack<Struct> ActParsList, ActPars, ActParsListOptional ;
-
+non terminal Integer AssignOp, AddOpRight, AddOpLeft, MulOpRight, MulOpLeft ;
 precedence left ELSE;
 
 start with Program;
@@ -823,8 +897,12 @@ start with Program;
 OpenScope ::= {: Tab.openScope(); :} ;
 CloseScope ::= {: Tab.closeScope(); :} ;
 
-Program ::= PROG ProgName:p OpenScope ProgramElementsList L_BRACE {: parser.isGlobalContext = false; // Closing global context :} MethodsList 
-			R_BRACE {: Tab.chainLocalSymbols(p); :} CloseScope
+Program ::= PROG ProgName:p OpenScope ProgramElementsList L_BRACE {: parser.isGlobalContext = false; // Closing global context :} MethodsList R_BRACE
+			{: 
+				Tab.chainLocalSymbols(p);
+				Code.dataSize = Tab.currentScope().getnVars(); 
+			:} 
+			CloseScope
 			;
 
 ProgName ::= IDENT:programName 
@@ -865,20 +943,26 @@ ConstList ::= ConstList COMMA IDENT:constName EQUALS OneConst:currentConstObject
 
 OneConst ::= NUMBER:value
 				{:
-					RESULT = new Obj(Obj.Con, "", Tab.intType);  
- 	    			RESULT.setAdr((int)value);
+					Obj numberObject = new Obj(Obj.Con, "", Tab.intType);  
+ 	    			numberObject.setAdr((int)value);
+ 	    			Code.load(numberObject);
+ 	    			RESULT = numberObject;
  	    		:} 
 				|
 			 	CHAR:value
 			 	{:
-					RESULT = new Obj(Obj.Con, "", Tab.charType);  
-		 	    	RESULT.setAdr(value);
+					Obj charObject = new Obj(Obj.Con, "", Tab.charType);  
+		 	    	charObject.setAdr(value);
+		 	    	Code.load(charObject);
+		 	    	RESULT = charObject;
 				:}
 				|
 			 	BOOL:value
 			 	{:
-					RESULT = new Obj(Obj.Con, "", boolType);  
-		 	    	RESULT.setAdr(value ? 1:0);
+					Obj boolObject = new Obj(Obj.Con, "", boolType);  
+		 	    	boolObject.setAdr(value ? 1:0);
+		 	    	Code.load(boolObject);
+		 	    	RESULT = boolObject;
 				:}
 				;
  
@@ -1007,11 +1091,16 @@ MethodDecl ::= {: parser.isMethodContext = true; // Starting method context :}
 					met.setLevel(numOfPars);
 					Tab.chainLocalSymbols(met); // Hack to enable recursion. 
 				:} 
-				OpenScope VarsList L_BRACE StatementsList R_BRACE CloseScope
+				OpenScope VarsList L_BRACE
+				{: generateMethodStart(Tab.currentScope().getnVars() + Tab.currentScope().getOuter().getnVars()); :}
+				StatementsList R_BRACE CloseScope
 				{: 
 					parser.currentMethodObject = Tab.noObj;
 					parser.incrementMethodsCount();
 					parser.isMethodContext = false; // Closing method context
+					
+					generateMethodEnd();
+					
 					Tab.chainLocalSymbols(met); 
 				:}
 				CloseScope
@@ -1087,7 +1176,10 @@ Statement ::= DesignatorStatement SEMI
 				{: boolean isOk = canBeAssignedTo(des, desleft) && isPrimitiveType(des, desleft); :}
 				|
 				PRINT L_PAREN Expr:expr NumbersListOptional R_PAREN SEMI
-				{: boolean isOk = isPrimitiveType(expr, exprleft); :} 
+				{: 
+					boolean isOk = isPrimitiveType(expr, exprleft);
+					generatePrintCall(expr.getType(), exprleft); 
+				:} 
 				|
 				L_BRACE StatementsList R_BRACE
 				{: parser.statementsBlockCount++; :}
@@ -1096,7 +1188,7 @@ Statement ::= DesignatorStatement SEMI
 StatementsList ::= StatementsList Statement
 					|
 					/* epsilon */
-					;				
+					;
 				
 NumbersListOptional ::= COMMA NumbersList
 				|
@@ -1106,7 +1198,7 @@ NumbersListOptional ::= COMMA NumbersList
 NumbersList ::= NumbersList COMMA NUMBER  
 				|
 				NUMBER
-				;				
+				;
 
 Return ::= RETURN SEMI:s
 			{: 
@@ -1201,8 +1293,11 @@ RelOp ::= EQUALITY {: isClassAndArrayCompatibleRelOp = true; :}
 			LESS_EQUAL {: isClassAndArrayCompatibleRelOp = false; :}
 			;
 
-DesignatorStatement ::= Designator:des AssignOp Expr:exp
-						{: RESULT = areCompatibleTypes(des, exp, true, expleft) ? des.getType() : Tab.noType; :}
+DesignatorStatement ::= Designator:des AssignOp:operationCode Expr:exp
+						{: 
+							areCompatibleTypes(des, exp, true, expleft);
+							generateAssignOperation(des, operationCode);
+						:}
 						|
 						Designator AssignOp error
 						{: parser.trackSyntaxErrorRecovery(ERROR_CODE.ASSIGN, "(1)"); RESULT = Tab.noType; :}
@@ -1213,14 +1308,17 @@ DesignatorStatement ::= Designator:des AssignOp Expr:exp
 								parser.mainMethodFunctionCallsCount++;
 							}
 							
-							RESULT = isObjectMethod(des, desleft) && hasMethodAppropriateParams(des, params, desleft) ? des.getType() : Tab.noType; 
+							isObjectMethod(des, desleft);
+							hasMethodAppropriateParams(des, params, desleft);
+							
+							generateMethodCall(des);
 						:}
 						|
 						Designator:des INCREMENT
-						{: RESULT = isAssignableToInt(des, desleft) ? des.getType() : Tab.noType; :}
+						{: isAssignableToInt(des, desleft); :}
 						|
 						Designator:des DECREMENT
-						{: RESULT = isAssignableToInt(des, desleft) ? des.getType() : Tab.noType; :}
+						{: isAssignableToInt(des, desleft); :}
 						;
 						
 Designator ::= IDENT:identifier
@@ -1299,18 +1397,30 @@ Expr ::= Negation TermList:termList
 TermList ::= Term:term
 				{: RESULT = term; :}
 				|
-				Term:term AddOpLeft {: hasUsedLeftOperator = true; :} TermList:termList 
-				{: RESULT = isInteger(term.getType(), termleft) && isInteger(termList.getType(), termListleft) ? term : Tab.noObj; :}
+				Term:term AddOpLeft:operationCode {: hasUsedLeftOperator = true; :} TermList:termList 
+				{: 
+					Code.put(operationCode);
+					RESULT = isInteger(term.getType(), termleft) && isInteger(termList.getType(), termListleft) ? term : Tab.noObj;
+				:}
 				|
-				Term:term {: checkRightOperatorUsageAvailability(termleft); :} AddOpRight TermList:termList 
-				{: RESULT = isAssignableToInt(term, termleft) && isInteger(termList.getType(), termListleft) ? term : Tab.noObj; :}
+				Term:term {: checkRightOperatorUsageAvailability(termleft); :} AddOpRight:operationCode TermList:termList 
+				{: 
+					generateRightOperationForExpression(term, operationCode);// Do the operation.
+					RESULT = isAssignableToInt(term, termleft) && isInteger(termList.getType(), termListleft) ? term : Tab.noObj;
+				:}
 				;
 
-Term ::= Factor:fac MulOpLeft {: hasUsedLeftOperator = true; :} Term:term
-				{: RESULT = isInteger(fac.getType(), facleft) && isInteger(term.getType(), termleft) ? fac : Tab.noObj; :}
+Term ::= Factor:fac MulOpLeft:operationCode {: hasUsedLeftOperator = true; :} Term:term
+				{:
+					Code.put(operationCode);
+					RESULT = isInteger(fac.getType(), facleft) && isInteger(term.getType(), termleft) ? fac : Tab.noObj;
+				:}
 				|
-				Factor:fac {: checkRightOperatorUsageAvailability(facleft); :} MulOpRight Term:term
-				{: RESULT = isAssignableToInt(fac, facleft) && isInteger(term.getType(), termleft) ? fac : Tab.noObj; :}
+				Factor:fac {: checkRightOperatorUsageAvailability(facleft); :} MulOpRight:operationCode Term:term
+				{:
+					generateRightOperationForExpression(fac, operationCode);
+					RESULT = isAssignableToInt(fac, facleft) && isInteger(term.getType(), termleft) ? fac : Tab.noObj; 
+				:}
 				|
 				Factor:fac
 				{: RESULT = fac; :}
@@ -1319,8 +1429,13 @@ Term ::= Factor:fac MulOpLeft {: hasUsedLeftOperator = true; :} Term:term
 Factor ::= Designator:des ActParsListOptional:params
 			{:
 				Obj result = Tab.noObj;
-				if((params == null && isObjectVariable(des, desleft)) 
-				|| (params != null && isObjectMethod(des, desleft) && hasMethodAppropriateParams(des, params, desleft))) {
+				if(params == null && isObjectVariable(des, desleft))
+				{
+					// Designator is variable.
+					result = des;
+					Code.load(result);
+				} else if(params != null && isObjectMethod(des, desleft) && hasMethodAppropriateParams(des, params, desleft)) {
+					// Designator is method.
 					result = des;
 				}
 				RESULT = result;
@@ -1349,10 +1464,13 @@ NewArrayType ::= L_INDEXER Expr:exp R_INDEXER
 					; 
 
 AssignOp ::= EQUALS
+			{: RESULT = -1; // We won't do anything when this is set. :}
 			|
-			AddOpRight
+			AddOpRight:operationCode
+			{: RESULT = operationCode; :}
 			|
-			MulOpRight
+			MulOpRight:operationCode
+			{: RESULT = operationCode; :}
 			;
 
 Negation ::= MINUS
@@ -1360,26 +1478,26 @@ Negation ::= MINUS
 			/* epsilon */
 			;
 
-AddOpLeft ::= PLUS
+AddOpLeft ::= PLUS {: RESULT = Code.add; :}
 				|
-				MINUS
+				MINUS {: RESULT = Code.sub; :}
 				;
 				
-AddOpRight ::= PLUS_EQUALS
+AddOpRight ::= PLUS_EQUALS {: RESULT = Code.add; :}
 				|
-				MINUS_EQUALS
+				MINUS_EQUALS {: RESULT = Code.sub; :}
 				;				
 
-MulOpLeft ::= MULTIPLY
+MulOpLeft ::= MULTIPLY {: RESULT = Code.mul; :}
 				|
-				DIVIDE
+				DIVIDE {: RESULT = Code.div; :}
 				|
-				MODULATE
+				MODULATE {: RESULT = Code.rem; :}
 				;
 				
-MulOpRight ::= MULTIPLY_EQUALS
+MulOpRight ::= MULTIPLY_EQUALS {: RESULT = Code.mul; :}
 				|
-				DIVIDE_EQUALS
+				DIVIDE_EQUALS {: RESULT = Code.div; :}
 				|
-				MODULATE_EQUALS
+				MODULATE_EQUALS {: RESULT = Code.rem; :}
 				;				
