@@ -2,31 +2,14 @@
 
 program test_303
 
-class C {
-	int d;
-}
+const int sd = 3;
 
-class D extends C {
-	int dd;
-	int g;
-	{
-		void nesto() {
-			d = 4;
-		}
-	}
-}
 int a;
-D d;
-int b[];
-C c;
 {
 	void main()
-	{	
-		b = new int[4];
-		b[0] = 111;
-		a += 2;
-		b[0] += b[0];
-		print(b[0] += 3);
+	{
+		a = 2;
+		a += a *= sd;
 		print(a);
 	}
 }

@@ -858,7 +858,7 @@ action code {:
 	private void generateRightOperationForExpression(Obj destinationObject, int operationCode) {
 		// Do the operation.
 		Code.put(operationCode);
-		// Store value
+		// Store value.
 		Code.store(destinationObject);
 		// Push it back to stack so others can use it.
 		Code.load(destinationObject);
@@ -886,6 +886,17 @@ action code {:
 			Code.put(Code.new_);
 	   		Code.put2(currentType.getNumberOfFields());
 		}
+	}
+	
+	private void generateIncrementDecrement(Obj designatorObject, int operationCode) {
+		// Load designator object.
+		Code.load(designatorObject);
+		// Put 1 on stack to prepare it for operation.
+		Code.loadConst(1);
+		// Put operation code.
+		Code.put(operationCode);
+		// Store value.
+		Code.store(designatorObject);
 	}
 	
 	// Used when "+=" or "*=" are used.
@@ -1370,10 +1381,16 @@ DesignatorStatement ::= Designator:des AssignOp:operationCode
 						:}
 						|
 						Designator:des INCREMENT
-						{: isAssignableToInt(des, desleft); :}
+						{: 
+							isAssignableToInt(des, desleft);
+							generateIncrementDecrement(des, Code.add);
+						:}
 						|
 						Designator:des DECREMENT
-						{: isAssignableToInt(des, desleft); :}
+						{: 
+							isAssignableToInt(des, desleft);
+							generateIncrementDecrement(des, Code.sub);
+						:}
 						;
 						
 Designator ::= IDENT:identifier
