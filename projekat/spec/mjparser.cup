@@ -868,9 +868,7 @@ action code {:
 	private void generateAssignOperation(Obj destinationObject, int operationCode) {
 		// Check if "+=" or "*=" is called.
 		if(operationCode > 0) {
-			// First push designator to stack so we can do operation on it.
-			Code.load(destinationObject);
-			// Push operation. That will leave result on stack for store to pick it up.
+			// Push operation. That will leave result on stack for upcoming expression to pick it up.
 			Code.put(operationCode);
 		}
 		// Expr already set everything we need on stack. Just put to designator.
@@ -887,6 +885,28 @@ action code {:
 		} else {
 			Code.put(Code.new_);
 	   		Code.put2(currentType.getNumberOfFields());
+		}
+	}
+	
+	// Used when "+=" or "*=" are used.
+	private void duplicateStackValuesIfNeeded(Obj designatorObject, int operationCode, boolean isForExpression) {
+		// We have to load designatorObject as first parameter of the "+=" or "*=" expressions so we can use them for operation.
+		// We do it here because of the case when designatorObject is array element and in order to load properly it needs
+		// array address and index on stack.
+		// We also have to copy last two things from stack (adress and index value) so we can use them for astore and aload.
+		if(operationCode > 0) {
+			if(designatorObject.getKind() == Obj.Elem) {
+				// Duplicate address and index value because we will need it for astore later.
+				Code.put(Code.dup2);
+				
+				if(isForExpression) {
+					// In expression, after operation is done, we want to leave result on stack as well for others to take it.
+					// We have to prepare address and index value for that as well.
+					Code.put(Code.dup2);
+				}
+			}
+			// First push designator to stack so we can do operation on it.
+			Code.load(designatorObject);
 		}
 	}
 :}
@@ -1322,16 +1342,7 @@ RelOp ::= EQUALITY {: isClassAndArrayCompatibleRelOp = true; :}
 			;
 
 DesignatorStatement ::= Designator:des AssignOp:operationCode 
-						{:
-							// If this designator is array, on stack we need to have following (from bottom to top):
-							// address, index, assign value
-							// We have address (Designator is responsible for that), we will have assign value (expr that follows is responsible)
-							// but between these two, we have to add index as well.
-							if(des.getKind() == Obj.Elem) {
-								Code.load(des);
-								ivan
-							}
-						:}
+						{: duplicateStackValuesIfNeeded(des, operationCode, false); :}
 						Expr:exp
 						{: 
 							areCompatibleTypes(des, exp, true, expleft);
@@ -1390,8 +1401,6 @@ Designator ::= IDENT:identifier
 						result = new Obj(Obj.Elem, "", des.getType().getElemType());
 						parser.usage_info(des, "element of array \"" + des.getName() + "\" used.", desleft);
 					}
-					
-					Code.load(result); // Put on stack index in the array. 
 					
 					RESULT = result;
 				:}
@@ -1456,7 +1465,11 @@ TermList ::= Term:term
 					RESULT = isInteger(term.getType(), termleft) && isInteger(termList.getType(), termListleft) ? term : Tab.noObj;
 				:}
 				|
-				Term:term {: checkRightOperatorUsageAvailability(termleft); :} AddOpRight:operationCode TermList:termList 
+				Term:term {: checkRightOperatorUsageAvailability(termleft); :} AddOpRight:operationCode 
+				{:
+					duplicateStackValuesIfNeeded(term, operationCode, true);
+				:}
+				TermList:termList 
 				{: 
 					generateRightOperationForExpression(term, operationCode);// Do the operation.
 					RESULT = isAssignableToInt(term, termleft) && isInteger(termList.getType(), termListleft) ? term : Tab.noObj;
@@ -1469,7 +1482,11 @@ Term ::= Factor:fac MulOpLeft:operationCode {: hasUsedLeftOperator = true; :} Te
 					RESULT = isInteger(fac.getType(), facleft) && isInteger(term.getType(), termleft) ? fac : Tab.noObj;
 				:}
 				|
-				Factor:fac {: checkRightOperatorUsageAvailability(facleft); :} MulOpRight:operationCode Term:term
+				Factor:fac {: checkRightOperatorUsageAvailability(facleft); :} MulOpRight:operationCode
+				{:
+					duplicateStackValuesIfNeeded(fac, operationCode, true);
+				:}
+				Term:term
 				{:
 					generateRightOperationForExpression(fac, operationCode);
 					RESULT = isAssignableToInt(fac, facleft) && isInteger(term.getType(), termleft) ? fac : Tab.noObj; 
@@ -1486,7 +1503,10 @@ Factor ::= Designator:des ActParsListOptional:params
 				{
 					// Designator is variable.
 					result = des;
-					Code.load(result);
+					if(des.getKind() != Obj.Elem) {
+						// For arrays, we can't do load because it would affect index and address values on stack before we duplicated them.
+						Code.load(result);
+					}
 				} else if(params != null && isObjectMethod(des, desleft) && hasMethodAppropriateParams(des, params, desleft)) {
 					// Designator is method.
 					generateMethodCall(des, false);

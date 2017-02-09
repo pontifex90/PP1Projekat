@@ -23,9 +23,10 @@ C c;
 	void main()
 	{	
 		b = new int[4];
-		b[3] = 111;
-		a = b[3];
-		print(a);
+		b[0] = 111;
+		a += 2;
+		a = b[0];
+		print(b[0] += 3);
 	}
 }
 
