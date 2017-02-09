@@ -896,6 +896,11 @@ action code {:
 		// We also have to copy last two things from stack (adress and index value) so we can use them for astore and aload.
 		if(operationCode > 0) {
 			if(designatorObject.getKind() == Obj.Elem) {
+				if(isForExpression) {
+					// Factor has added Code.load here, but if we are using this array for expression that load is extra and should be removed
+					// because it will affect address and index value which are on stack.
+					Code.pc--;
+				}
 				// Duplicate address and index value because we will need it for astore later.
 				Code.put(Code.dup2);
 				
@@ -1503,10 +1508,7 @@ Factor ::= Designator:des ActParsListOptional:params
 				{
 					// Designator is variable.
 					result = des;
-					if(des.getKind() != Obj.Elem) {
-						// For arrays, we can't do load because it would affect index and address values on stack before we duplicated them.
-						Code.load(result);
-					}
+					Code.load(result);
 				} else if(params != null && isObjectMethod(des, desleft) && hasMethodAppropriateParams(des, params, desleft)) {
 					// Designator is method.
 					generateMethodCall(des, false);
