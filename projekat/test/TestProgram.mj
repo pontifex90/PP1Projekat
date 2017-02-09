@@ -1,19 +1,30 @@
 //Test 303
 
 program test_303
-int a;
-char bbb;
-{
 
-	void asd(int b, bool d, char g) {
-		a = b;
-		bbb = g;
+class C {
+	int d;
+}
+
+class D extends C {
+	int dd;
+	int g;
+	{
+		void nesto() {
+			d = 4;
+		}
 	}
+}
+int a;
+D d;
+int b[];
+C c;
+{
 	void main()
 	{	
-		a = 2;
-		a *= 2;
-		
+		b = new int[4];
+		b[3] = 111;
+		a = b[3];
 		print(a);
 	}
 }

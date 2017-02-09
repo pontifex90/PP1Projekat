@@ -251,6 +251,7 @@ action code {:
 		
 	Struct currentType = Tab.noType;
 
+	boolean doesReturnExist = false;
 	boolean isVoidMethod = false;
 	boolean hasUsedLeftOperator = false;
 	boolean isClassAndArrayCompatibleRelOp = false;
@@ -294,7 +295,7 @@ action code {:
 		}
 	}
 	
-	private boolean checkIfObjIsArray(Obj object, int line) {
+	private boolean isObjectArray(Obj object, int line) {
 		boolean isArray = object.getType().getKind() == Struct.Array;
 		if(!isArray) {
 			parser.semantic_error("tried to use indexing on a non-array object \"" + object.getName() + "\"", line);
@@ -833,15 +834,22 @@ action code {:
 	}
 	
 	private void generateMethodEnd() {
-		Code.put(Code.exit);
-	 	Code.put(Code.return_);
+		if (parser.currentMethodObject.getType() == Tab.noType) {
+			Code.put(Code.exit);
+			Code.put(Code.return_);
+		} else {
+			// Set trap for runtime error if return is skipped in non-void method.
+			Code.put(Code.trap);
+			Code.put(1);
+		} 
 	}
 	
-	private void generateMethodCall(Obj functionObject) {
+	// If method is called as designator statement, we have to pop return result so it's not left on stack and nobody uses it.
+	private void generateMethodCall(Obj functionObject, boolean popResult) {
 		int destAdr = functionObject.getAdr() - Code.pc;
    	    Code.put(Code.call);
    	    Code.put2(destAdr);
-   	    if (functionObject.getType() != Tab.noType) {
+   	    if (popResult && functionObject.getType() != Tab.noType) {
     		Code.put(Code.pop);
 		}
 	}
@@ -868,6 +876,19 @@ action code {:
 		// Expr already set everything we need on stack. Just put to designator.
 		Code.store(destinationObject);
 	}
+	
+	// Used when instantiating arrays and class instances.
+	private void generateInstantiationCode(Obj arrayObject) {
+		boolean isArray = arrayObject != null && arrayObject != Tab.noObj;
+		
+		if(isArray) {
+			Code.put(Code.newarray);
+			Code.put(1); // So array is instantiated as array of words (32bytes)
+		} else {
+			Code.put(Code.new_);
+	   		Code.put2(currentType.getNumberOfFields());
+		}
+	}
 :}
 
 terminal PROG, CLASS, THIS, CONST, EQUALS, L_BRACE, R_BRACE, L_PAREN, R_PAREN, SEMI, COMMA, L_INDEXER, R_INDEXER ;
@@ -882,12 +903,13 @@ terminal Boolean BOOL ;
 non terminal Program, ProgramElementsList, MethodDecl, ProgramElement, ConstDecl, VarDecl, ClassDecl ;
 non terminal ConstList, VarsElementsList, OneVar, StaticDeclarator, VoidType, Statement ;
 non terminal MethodsSection, MethodsList, VarsList, ForStatement, OptionalDesignatorStatement, OptionalCondition ;
-non terminal Condition, CondTerm, CondTermList, CondFact, CondFactList, Negation, IfStatement ; 
+non terminal Condition, CondTerm, CondTermList, CondFact, CondFactList, IfStatement ; 
 non terminal NumbersListOptional, NumbersList, StatementsList, OpenScope, CloseScope, RelOp, DesignatorStatement ;
 
 non terminal Obj ProgName, Expr, OneConst, MethodName, Designator, Type, Factor, NewArrayType, Term, TermList, ClassExtender ;
 non terminal Struct ClassName, Return ;
 non terminal Integer FormPars, FormParsList ;
+non terminal Boolean Negation ;
 non terminal Stack<Struct> ActParsList, ActPars, ActParsListOptional ;
 non terminal Integer AssignOp, AddOpRight, AddOpLeft, MulOpRight, MulOpLeft ;
 precedence left ELSE;
@@ -1093,11 +1115,15 @@ MethodDecl ::= {: parser.isMethodContext = true; // Starting method context :}
 				:} 
 				OpenScope VarsList L_BRACE
 				{: generateMethodStart(Tab.currentScope().getnVars() + Tab.currentScope().getOuter().getnVars()); :}
-				StatementsList R_BRACE CloseScope
-				{: 
+				StatementsList R_BRACE:r CloseScope
+				{:
+					if(!isVoidMethod && !doesReturnExist) {
+						parser.semantic_error("non-void method must have return.", rleft);
+					} 
 					parser.currentMethodObject = Tab.noObj;
 					parser.incrementMethodsCount();
 					parser.isMethodContext = false; // Closing method context
+					doesReturnExist = false;
 					
 					generateMethodEnd();
 					
@@ -1203,8 +1229,9 @@ NumbersList ::= NumbersList COMMA NUMBER
 Return ::= RETURN SEMI:s
 			{: 
 				if(!isVoidMethod) {
-					parser.semantic_error("method must return a type.", sleft);
+					parser.semantic_error("non-void method must return a type.", sleft);
 				}
+				doesReturnExist = true;
 			:}
 			|
 			RETURN Expr:expr SEMI
@@ -1214,6 +1241,7 @@ Return ::= RETURN SEMI:s
 				} else if(!areCompatibleTypes(parser.currentMethodObject, expr, false, exprleft)) {
 						parser.semantic_error("tried to return wrong value type.", exprleft);
 				}
+				doesReturnExist = true;
 			:}
 			;
 				
@@ -1293,7 +1321,18 @@ RelOp ::= EQUALITY {: isClassAndArrayCompatibleRelOp = true; :}
 			LESS_EQUAL {: isClassAndArrayCompatibleRelOp = false; :}
 			;
 
-DesignatorStatement ::= Designator:des AssignOp:operationCode Expr:exp
+DesignatorStatement ::= Designator:des AssignOp:operationCode 
+						{:
+							// If this designator is array, on stack we need to have following (from bottom to top):
+							// address, index, assign value
+							// We have address (Designator is responsible for that), we will have assign value (expr that follows is responsible)
+							// but between these two, we have to add index as well.
+							if(des.getKind() == Obj.Elem) {
+								Code.load(des);
+								ivan
+							}
+						:}
+						Expr:exp
 						{: 
 							areCompatibleTypes(des, exp, true, expleft);
 							generateAssignOperation(des, operationCode);
@@ -1311,7 +1350,7 @@ DesignatorStatement ::= Designator:des AssignOp:operationCode Expr:exp
 							isObjectMethod(des, desleft);
 							hasMethodAppropriateParams(des, params, desleft);
 							
-							generateMethodCall(des);
+							generateMethodCall(des, true);
 						:}
 						|
 						Designator:des INCREMENT
@@ -1326,23 +1365,33 @@ Designator ::= IDENT:identifier
 				|
 				THIS DOT IDENT:identifier
 				{:
-					RESULT = isThisAvailable(identifier, identifierleft) 
+					Obj thisObject = isThisAvailable(identifier, identifierleft) 
 								? findClassMemberWithName(parser.currentClass, identifier, true, identifierleft)
 								: Tab.noObj;
+					
+					Code.load(thisObject); // Prepare for put/set field which on stack requires adress and value on stack.
+					RESULT = thisObject;
 				:}
 				|
 				Designator:des DOT IDENT:identifier
-				{: RESULT = findClassMemberWithName(des, identifier, false, identifierleft); :}
-				|
-				Designator:des L_INDEXER Expr:exp R_INDEXER
 				{:
-					boolean isArrayAndHasValidIndexingType = isIndexingTypeValid(exp.getType(), expleft) && checkIfObjIsArray(des, desleft);  
+					Code.load(des); // Prepare for put/set field which on stack requires adress and value on stack.
+					RESULT = findClassMemberWithName(des, identifier, false, identifierleft);
+				:}
+				|
+				Designator:des L_INDEXER 
+				{: Code.load(des); // When loading array (Run.aload) we need address of the array (des) pushed on stack before the index (exp). :}
+				Expr:exp R_INDEXER
+				{:
+					boolean isArrayAndHasValidIndexingType = isIndexingTypeValid(exp.getType(), expleft) && isObjectArray(des, desleft);  
 					
 					Obj result = Tab.noObj;
 					if (isArrayAndHasValidIndexingType) {
 						result = new Obj(Obj.Elem, "", des.getType().getElemType());
 						parser.usage_info(des, "element of array \"" + des.getName() + "\" used.", desleft);
 					}
+					
+					Code.load(result); // Put on stack index in the array. 
 					
 					RESULT = result;
 				:}
@@ -1387,10 +1436,14 @@ ActPars ::= Expr:exp COMMA ActPars:pars
 			:}
 			;
 
-Expr ::= Negation TermList:termList
+Expr ::= Negation:isNegated TermList:termList
 			{:
-				RESULT = termList;
-				hasUsedLeftOperator = false; 
+				if(isNegated) {
+					// This will negate value and leave it on stack.
+					Code.put(Code.neg);
+				}
+				hasUsedLeftOperator = false;
+				RESULT = termList; 
 			:}
 			;
 
@@ -1436,6 +1489,7 @@ Factor ::= Designator:des ActParsListOptional:params
 					Code.load(result);
 				} else if(params != null && isObjectMethod(des, desleft) && hasMethodAppropriateParams(des, params, desleft)) {
 					// Designator is method.
+					generateMethodCall(des, false);
 					result = des;
 				}
 				RESULT = result;
@@ -1445,7 +1499,10 @@ Factor ::= Designator:des ActParsListOptional:params
 			{: RESULT = constant; :}
 			|
 			NEW Type:typeObject NewArrayType:arrayObject
-			{: RESULT = instantiateNewObject(typeObject, arrayObject, arrayObjectleft); :}
+			{: 
+		   		generateInstantiationCode(arrayObject);
+				RESULT = instantiateNewObject(typeObject, arrayObject, arrayObjectleft);
+			:}
 			|
 			L_PAREN Expr:exp R_PAREN 
 			{: RESULT = new Obj(Obj.NO_VALUE, "", exp.getType()); :}
@@ -1473,9 +1530,10 @@ AssignOp ::= EQUALS
 			{: RESULT = operationCode; :}
 			;
 
-Negation ::= MINUS
+Negation ::= MINUS {: RESULT = true; :}
 			|
 			/* epsilon */
+			{: RESULT = false; :}
 			;
 
 AddOpLeft ::= PLUS {: RESULT = Code.add; :}
