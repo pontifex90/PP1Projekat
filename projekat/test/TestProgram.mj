@@ -1,16 +1,30 @@
 //Test 303
 
 program test_303
-
-const int sd = 3;
-
-int a;
-{
-	void main()
+int x;
+class D {
+	int a;
 	{
-		a = 2;
-		a += a *= sd;
-		print(a);
+		static int ad(int a) {
+			x = a;
+			
+			return 4;
+		}
+	}
+	
+}
+
+D d;
+int a;
+bool dd;
+{
+	void main() 
+	{	
+		if(false || true && true || false) {
+			print('T');
+		} else {
+			print('F');
+		}
 	}
 }
 

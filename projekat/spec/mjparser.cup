@@ -256,6 +256,14 @@ action code {:
 	boolean hasUsedLeftOperator = false;
 	boolean isClassAndArrayCompatibleRelOp = false;
 	
+	// These two represent stack for current if/else nesting level.
+	Stack<Integer> failedConditionsFixupAddresses;
+	Stack<Integer> succeededConditionsFixupAddresses;
+	
+	Stack<Stack<Integer>> failedFixupStacks = new Stack<Stack<Integer>>();
+	Stack<Stack<Integer>> suceededFixupStacks = new Stack<Stack<Integer>>();
+	
+	int branchExitFixupAddress;
 	// Semantic methods
 	
 	// We have to manually link everything to class scope because of usage before last class chaining.
@@ -823,6 +831,11 @@ action code {:
 	  	}
 	}
 	
+	private void generateReadCall(Obj designatorObject) {
+		Code.put(designatorObject.getType() == Tab.charType ? Code.bread : Code.read);
+  	 	Code.store(designatorObject);
+	}
+	
 	private void generateMethodStart(int localAndFormalVarsNumber) {
 		parser.currentMethodObject.setAdr(Code.pc);
    		if (parser.isMainMethod()) {
@@ -925,6 +938,39 @@ action code {:
 			Code.load(designatorObject);
 		}
 	}
+	
+	private void generateJumpForFailure(int operationCode) {
+		Code.putFalseJump(operationCode, 0);
+		// Store fixup address.
+ 		failedConditionsFixupAddresses.push(Code.pc - 2);
+	}
+	
+	private void generateJumpForSuccess() {
+		// Dummy address. Will be filled later from succeededConditionsFixupAddresses.
+		Code.putJump(0);
+		// Store fixup address.
+		succeededConditionsFixupAddresses.push(Code.pc - 2);
+	}
+	
+	private void generateJumpForGettingOut() {
+		// Dummy address. Will be filled later.
+		Code.putJump(0);
+		// Store fixup address.
+		branchExitFixupAddress = Code.pc - 2;
+	}
+	
+	// Fixes up single passed addresses.
+	private void generateJumpFixup(int fixupAddress) {
+		Code.fixup(fixupAddress);
+	}
+	
+	// Fixes up all jumps for passed addresses.
+	private void generateJumpFixupAll(Stack<Integer> fixupAddresses) {
+		int stackSize = fixupAddresses.size();
+		for(int i = 0; i < stackSize; i++) {
+			Code.fixup(fixupAddresses.pop());
+		}
+	}
 :}
 
 terminal PROG, CLASS, THIS, CONST, EQUALS, L_BRACE, R_BRACE, L_PAREN, R_PAREN, SEMI, COMMA, L_INDEXER, R_INDEXER ;
@@ -939,15 +985,15 @@ terminal Boolean BOOL ;
 non terminal Program, ProgramElementsList, MethodDecl, ProgramElement, ConstDecl, VarDecl, ClassDecl ;
 non terminal ConstList, VarsElementsList, OneVar, StaticDeclarator, VoidType, Statement ;
 non terminal MethodsSection, MethodsList, VarsList, ForStatement, OptionalDesignatorStatement, OptionalCondition ;
-non terminal Condition, CondTerm, CondTermList, CondFact, CondFactList, IfStatement ; 
-non terminal NumbersListOptional, NumbersList, StatementsList, OpenScope, CloseScope, RelOp, DesignatorStatement ;
+non terminal CondTerm, CondFact, IfStatement, ConditionHelper ; 
+non terminal NumbersListOptional, NumbersList, StatementsList, OpenScope, CloseScope, DesignatorStatement ;
 
 non terminal Obj ProgName, Expr, OneConst, MethodName, Designator, Type, Factor, NewArrayType, Term, TermList, ClassExtender ;
 non terminal Struct ClassName, Return ;
 non terminal Integer FormPars, FormParsList ;
 non terminal Boolean Negation ;
 non terminal Stack<Struct> ActParsList, ActPars, ActParsListOptional ;
-non terminal Integer AssignOp, AddOpRight, AddOpLeft, MulOpRight, MulOpLeft ;
+non terminal Integer AssignOp, AddOpRight, AddOpLeft, MulOpRight, MulOpLeft, Condition, RelOp ;
 precedence left ELSE;
 
 start with Program;
@@ -1235,7 +1281,10 @@ Statement ::= DesignatorStatement SEMI
 				:}
 				|
 				READ L_PAREN Designator:des R_PAREN SEMI
-				{: boolean isOk = canBeAssignedTo(des, desleft) && isPrimitiveType(des, desleft); :}
+				{: 
+					boolean isOk = canBeAssignedTo(des, desleft) && isPrimitiveType(des, desleft); 
+					generateReadCall(des);
+				:}
 				|
 				PRINT L_PAREN Expr:expr NumbersListOptional R_PAREN SEMI
 				{: 
@@ -1294,12 +1343,19 @@ OptionalDesignatorStatement ::= DesignatorStatement
 								{: parser.trackSyntaxErrorRecovery(ERROR_CODE.FOR, "(1)"); RESULT = Tab.noObj; :}
 								;
 				
-IfStatement ::= IF L_PAREN Condition R_PAREN Statement
+IfStatement ::= IF L_PAREN ConditionHelper R_PAREN Statement
+				{: generateJumpFixupAll(failedConditionsFixupAddresses); :}
 				|
 				IF L_PAREN error R_PAREN Statement
 				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.IF, "(1)"); RESULT = Tab.noObj; :}
 				|
-				IF L_PAREN Condition R_PAREN Statement ELSE Statement
+				IF L_PAREN ConditionHelper R_PAREN Statement
+				ELSE
+				// We have to do jump out here, we can't before else because it will cause shift/reduce conflict. 
+				{: generateJumpForGettingOut(); :}
+				{: generateJumpFixupAll(failedConditionsFixupAddresses); :}
+				Statement
+				{: generateJumpFixup(branchExitFixupAddress); :}
 				|
 				IF L_PAREN error R_PAREN Statement ELSE Statement
 				{: parser.trackSyntaxErrorRecovery(ERROR_CODE.IF, "(2)"); RESULT = Tab.noObj; :}
@@ -1313,48 +1369,63 @@ OptionalCondition ::= Condition
 						{: parser.trackSyntaxErrorRecovery(ERROR_CODE.FOR, "(2)"); RESULT = Tab.noObj; :}
 						;
 
+// Used like this only because we have to set fixup addresses and if we do it in IfStatement there are shift/reduce conflicts.
+ConditionHelper ::= Condition {: generateJumpFixupAll(succeededConditionsFixupAddresses); :} ;
+
 Condition ::= CondTerm 
 				|
-				CondTerm OR CondTermList 
+				CondTerm				
+				{:
+					// If code gets here, that means that previous condition term met it's condition.
+					// Remember that CondFact already generated jump for failure, we now have to set jump for success.
+					// This must be done if we have something like "a || b && c". If "a" is met, succeed immediately.
+					generateJumpForSuccess();
+				:}
+				OR 
+				{:
+					// Fixup everything we have so far.
+					// For example if we have condition "a && b || c",
+					// both "a" and "b" should have it's jump fixup right in front of "c" because "c" can still fulfill condition.
+					// In general whenever we have "||" we fixup all previous conditions and add a new false jump (done implicitly in CondFact).
+					// Last condition statement's jump fixup will for sure be in else branch. 
+					generateJumpFixupAll(failedConditionsFixupAddresses);
+				:}
+				Condition
 				;
-
-CondTermList ::= CondTerm OR CondTermList
-					|
-					CondTerm  
-					;
 					
-CondTerm ::= CondFact 
+CondTerm ::= CondFact
 				|
-				CondFact AND CondFactList
+				CondFact AND CondTerm
 				;
-
-CondFactList ::= CondFact AND CondFactList 
-					|
-					CondFact
-					;
 					
 CondFact ::= Expr:exp
 				{:
 					if(exp.getType() != boolType) {
 						parser.semantic_error("expression in condition must be of boolean type.", expleft);
 					}
+					Code.loadConst(0);
+		 	 		generateJumpForFailure(Code.ne);
 				:}
 				|
-				Expr:exp1 RelOp Expr:exp2
-				{: boolean isOk = isRelOpCompatible(exp1.getType(), exp2.getType(), exp1left); :}
+				Expr:exp1 RelOp:operationCode Expr:exp2
+				{: 
+					boolean isOk = isRelOpCompatible(exp1.getType(), exp2.getType(), exp1left);
+					RESULT = operationCode;
+					generateJumpForFailure(operationCode);
+				:}
 				;
 
-RelOp ::= EQUALITY {: isClassAndArrayCompatibleRelOp = true; :} 
+RelOp ::= EQUALITY {: isClassAndArrayCompatibleRelOp = true; RESULT = Code.eq; :} 
 			|
-			NOT_EQUAL {: isClassAndArrayCompatibleRelOp = true; :} 
+			NOT_EQUAL {: isClassAndArrayCompatibleRelOp = true; RESULT = Code.ne; :} 
 			|
-			GREATER {: isClassAndArrayCompatibleRelOp = false; :} 
+			GREATER {: isClassAndArrayCompatibleRelOp = false; RESULT = Code.gt; :} 
 			|
-			GREATER_EQUAL {: isClassAndArrayCompatibleRelOp = false; :}
+			GREATER_EQUAL {: isClassAndArrayCompatibleRelOp = false; RESULT = Code.ge; :}
 			|
-			LESS {: isClassAndArrayCompatibleRelOp = false; :}
+			LESS {: isClassAndArrayCompatibleRelOp = false; RESULT = Code.lt; :}
 			|
-			LESS_EQUAL {: isClassAndArrayCompatibleRelOp = false; :}
+			LESS_EQUAL {: isClassAndArrayCompatibleRelOp = false; RESULT = Code.le; :}
 			;
 
 DesignatorStatement ::= Designator:des AssignOp:operationCode 
@@ -1402,13 +1473,15 @@ Designator ::= IDENT:identifier
 								? findClassMemberWithName(parser.currentClass, identifier, true, identifierleft)
 								: Tab.noObj;
 					
-					Code.load(thisObject); // Prepare for put/set field which on stack requires adress and value on stack.
+					Code.load(thisObject); // Prepare for put/set field which requires address and value to be on stack.
 					RESULT = thisObject;
 				:}
 				|
 				Designator:des DOT IDENT:identifier
 				{:
-					Code.load(des); // Prepare for put/set field which on stack requires adress and value on stack.
+					if(des.getKind() != Obj.Type) {
+						Code.load(des); // Prepare for put/set field which requires address and value to be on stack.
+					}
 					RESULT = findClassMemberWithName(des, identifier, false, identifierleft);
 				:}
 				|
