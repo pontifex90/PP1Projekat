@@ -85,11 +85,11 @@ parser code {:
     }
   
     public void syntax_error(Symbol cur_token) {
-        report("Syntax error", cur_token, LOG_TYPE.ERROR);
+        report("Syntax error \"" + cur_token.value + "\"", cur_token, LOG_TYPE.ERROR);
     }
   	
   	public void semantic_error(String message, int line) {
-        report("Semantic error on line " + line + ": " + message, null, LOG_TYPE.ERROR);
+        report("Semantic error on line " + line + ", couldn't recognize: " + message, null, LOG_TYPE.ERROR);
     }
 
   	public void code_generation_error(String message, int line) {

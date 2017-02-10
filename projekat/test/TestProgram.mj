@@ -2,65 +2,10 @@
 
 program test_303
 
-const int cinilac = 4, delilac = 3;
-class Predmet
 {
-	int tezina;
-	char vrsta;
-
+	void main()
 	{
-		void postaviTezinu(int tezina) {this.tezina = tezina;}  
-		void ucitajTezinu() { read(tezina); }
-		static void ispis( Predmet p) { print(p.vrsta); print(eol); print(p.tezina);}
-		int zapremina() { return 0;}
-		int Q() {return zapremina() * tezina;}
-		void postaviVrstu(char vrsta) {this.vrsta = vrsta;}
-	}
-}
-
-class Sfera extends Predmet
-{
-	int r;
-	{
-		void postaviTezinu(int tezina) {this.tezina = tezina;  }
-		void postaviPoluprecnik(int r) {this.r = r; postaviVrstu('s');}
-		int zapremina()
-		int z;
-		{
-			z = cinilac;
-			z*=(r/=delilac); // 4 * (1
-			return z;
-		}
-// tezina = t  | zapreminaS =  
-// s0 {r=1, t=t, zap=} | p1 {a, b, c, t=t} | s2 {r=2, t=t} | p3 {a, b, c, t=t} | s4 {r=3, t=t} | p5 {a, b, c, t=t}
-	}
-}
-
-class Kvadar extends Predmet
-{
-	int a, b, c;
-	{
-		void postaviTezinu(int tezina) {this.tezina = tezina; }
-		void postaviStranice(int a, int b, int c) {this.a = a; this.b = b; this.c = c; vrsta = 'k';}
-		int zapremina()
-		int z;
-		{
-			z = a;
-			z*= b*=c;
-			return z;
-		}
-	}
-}
-Sfera s1;
-int zapreminaK, zapreminaS;
-int tezinaK, tezinaS;
-{
-	void main() Predmet predmet; int i; Kvadar k1, k2, k3; int t;
-	{
-		s1 = new Sfera;
-		s1.postaviTezinu(153);
-		print(s1.tezina);
-
+		sda
 	}
 }
 

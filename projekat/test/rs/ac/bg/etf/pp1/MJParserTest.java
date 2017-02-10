@@ -25,10 +25,20 @@ public class MJParserTest {
 	
 	public static void main(String[] args) throws Exception {
 		Logger log = Logger.getLogger(MJParserTest.class);
+		
+		if (args.length < 2) {
+			log.error("Invalid arguments! Usage: MJParserTest <source-file> <obj-file> ");
+			return;
+		}
+		
 		Reader br = null;
 		try {
+			File sourceCode = new File(args[0]);
+			if (!sourceCode.exists()) {
+				log.error("File not found: " + sourceCode.getAbsolutePath() + "");
+				return;
+			}
 			
-			File sourceCode = new File("test/TestProgram.mj");	
 			log.info("Compiling source file: " + sourceCode.getAbsolutePath());
 
 			br = new BufferedReader(new FileReader(sourceCode));
@@ -36,13 +46,13 @@ public class MJParserTest {
 			
 			MJParser p = new MJParser(lexer);
 	        Symbol s = p.parse();  //pocetak parsiranja
-	        //Tab.dump();
+	        Tab.dump();
 	        
 	        if(!p.wasParsingSuccessful) {
 	        	log.error("All error messages follow:" + p.allErrorMessages);
 	        	log.error("Parsing finished with ERRORS!");
 	        } else {
-	        	File objFile = new File("test/program.obj");
+	        	File objFile = new File(args[1]);
 	        	if (objFile.exists()) {
 	        		objFile.delete();
 	        	}
