@@ -19,32 +19,17 @@ int a;
 bool dd;
 {
 	void main() 
+	int x, y, z;
 	{	
-		if(false) {
-			if(false) 
-				print(2);
-			else 
-				if(false)
-					print(3);
-				else {
-					print(-3);
-			print(-3);}
-			print(-2);
+		for( x = 0 ; x <= 2; x++) {
+			for( y = 0 ; y < 2; y++) {
+				for( z = 100 * 2 - 198 ; z > 0; z -= 1) {
+					print(x);
+					print(y);
+					print(z);
+				}			
+			}
 		}
-		else 
-			if(false) 
-				print(22);
-			else 
-				print(-22);
-				if(true) {
-					if(true) {
-						print('t');
-					} else {
-						print('F');
-					}
-					print('X');
-				}
-		
 	}
 }
 
