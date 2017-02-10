@@ -1,35 +1,26 @@
 //Test 303
 
 program test_303
-int x;
-class D {
-	int a;
+
+
+class Sfera 
+{
+	int r;
 	{
-		static int ad(int a) {
-			x = a;
-			
-			return 4;
-		}
+		
+		void postaviPoluprecnik(int r) {this.r = 444; }
+		
 	}
-	
 }
 
-D d;
-int a;
-bool dd;
-{
-	void main() 
-	int x, y, z;
-	{	
-			for( y = 0 ; y < 2; y++) {
-				for( z = 100 * 2 - 198 ; z > 0; z -= 1) {
-					print(x);
-					print(y); 
-					if(z == 2) { continue; }
-					print(z);
-				}
-			}
 
+{
+	void main() Sfera s1;
+	{
+		s1 = new Sfera;
+		s1.r = 666;
+		s1.postaviPoluprecnik(33);
+		print(s1.r);
 	}
 }
 

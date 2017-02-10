@@ -256,6 +256,8 @@ action code {:
 	boolean hasUsedLeftOperator = false;
 	boolean isClassAndArrayCompatibleRelOp = false;
 	
+	int numberOfFormalParameters = 0;
+	
 	// These two represent stack for current if/else and for loop nesting level.
 	Stack<Integer> failedConditionsFixupAddresses;
 	Stack<Integer> succeededConditionsFixupAddresses;
@@ -284,17 +286,26 @@ action code {:
 	private String getContextStringForUsage(String identifier) {
 		Obj currentObject = Tab.currentScope.findSymbol(identifier);
 		boolean isInCurrentScope = currentObject != null;
-		if(isInCurrentScope) { return "local"; }
 		
-		currentObject = Tab.currentScope.getOuter().findSymbol(identifier);
-		
-		boolean isInOuterScope = currentObject != null;
-		if(isInOuterScope) {
-			return "formal parameter";
+		if(isInCurrentScope) { 
+			if(parser.isMethodContext) {
+				// We have to distinguish formal parameters and local vars.
+				// We do so by saving numberOfFormalParameters and the going through first numberOfFormalParameters of current scope 
+				// to check if this identifier is one of those. 
+				int i = 0;
+				for (Obj sym : Tab.currentScope().values()) {
+					if(i++ >= numberOfFormalParameters) { break; }
+					
+					if(sym.getName().equals(identifier)) {
+						return "formal parameter";	
+					}
+				}
+			}
+			return "local";
 		}
 		
 		if(parser.isClassContext) {
-			currentObject = Tab.currentScope.getOuter().getOuter().findSymbol(identifier);
+			currentObject = Tab.currentScope.getOuter().findSymbol(identifier);
 			
 			boolean isInClassScope = currentObject != null;
 			if(isInClassScope) {
@@ -338,6 +349,10 @@ action code {:
 		
 		// Check type of every parameter.
 		for(Obj param : methodObject.getLocalSymbols()) {
+			// In methodObject symbols, first there are formal params and then local vars.
+			// Since we already checked if number of actual and formal is same, now just check type for every actual param.
+			if(actualParams.size() == 0) { break; }
+			
    			if(!areCompatibleTypes(param.getType(), actualParams.pop(), line)) {
    				parser.semantic_error("formal (\"" + param.getName() + "\") and actual parameter types mismatch.", line);
    				return false;
@@ -571,8 +586,8 @@ action code {:
 		
 		if(isCalledAsThis) {
 			// If function is called as "this.identifier", that means we are in a class method and we have to search identifier in class context
-			// (we have to skip methods and formal parameters contexts).
-			Scope classScope = Tab.currentScope.getOuter().getOuter();
+			// (we have to skip methods and context).
+			Scope classScope = Tab.currentScope.getOuter();
 			result = classScope.findSymbol(identifier);
 			
 			String ident = identifier;
@@ -980,6 +995,15 @@ action code {:
 			Code.fixup(fixupAddresses.pop());
 		}
 	}
+
+	// Remember bug with "if(bla) break;" inside the for loop. That was because forLoopViolentExitFixupStack was cleared becasuse of that if.
+	private void InitiateFixupForLoop() {
+		forLoopEndStatementFixupStack.push(forLoopLastStatementSkipFixupAddress);
+		forLoopContentFixupStack.push(forLoopLastStatementFixupAddress);
+		forLoopViolentExitFixupStack.push(forLoopViolentExitFixupAddress);
+		
+		InitiateFixupStacksForNewLevel();
+	}
 	
 	// Used for tracking jump addresses in nested ifs and fors.
 	private void InitiateFixupStacksForNewLevel() {
@@ -989,10 +1013,25 @@ action code {:
 		failedFixupStacks.push(failedConditionsFixupAddresses);
 		failedConditionsFixupAddresses = new Stack<Integer>();
 		
-		branchExitFixupStack.push(branchExitFixupAddress);
-		forLoopEndStatementFixupStack.push(forLoopLastStatementSkipFixupAddress);
-		forLoopContentFixupStack.push(forLoopLastStatementFixupAddress);
-		forLoopViolentExitFixupStack.push(forLoopViolentExitFixupAddress);
+		branchExitFixupStack.push(branchExitFixupAddress);	
+	}
+	
+	private void ReleaseFixupForLoop() {
+		if(succeededFixupStacks.size() > 1 && failedFixupStacks.size() > 1) {
+			forLoopLastStatementSkipFixupAddress = forLoopEndStatementFixupStack.pop();
+			forLoopLastStatementFixupAddress = forLoopContentFixupStack.pop();
+			forLoopViolentExitFixupAddress = forLoopViolentExitFixupStack.pop();
+		} else {
+			forLoopLastStatementSkipFixupAddress = 0;
+			forLoopLastStatementFixupAddress = 0;
+			forLoopViolentExitFixupAddress = 0;
+			
+			forLoopEndStatementFixupStack.clear();
+			forLoopContentFixupStack.clear();
+			forLoopViolentExitFixupStack.clear();
+		}
+		
+		ReleaseFixupStacksForLevel();
 	}
 	
 	// When if or for is finished we need to clear fixup addresses stacks.
@@ -1001,24 +1040,15 @@ action code {:
 			succeededConditionsFixupAddresses = succeededFixupStacks.pop();
 			failedConditionsFixupAddresses = failedFixupStacks.pop();  
 			branchExitFixupAddress = branchExitFixupStack.pop();
-			forLoopLastStatementSkipFixupAddress = forLoopEndStatementFixupStack.pop();
-			forLoopLastStatementFixupAddress = forLoopContentFixupStack.pop();
-			forLoopViolentExitFixupAddress = forLoopViolentExitFixupStack.pop();
 		} else {
 			// It's last if, clear everything.
 			succeededConditionsFixupAddresses = null;
 			failedConditionsFixupAddresses = null;
 			branchExitFixupAddress = 0;
-			forLoopLastStatementSkipFixupAddress = 0;
-			forLoopLastStatementFixupAddress = 0;
-			forLoopViolentExitFixupAddress = 0;
 			
 			succeededFixupStacks.clear();
 			failedFixupStacks.clear();
 			branchExitFixupStack.clear();
-			forLoopEndStatementFixupStack.clear();
-			forLoopContentFixupStack.clear();
-			forLoopViolentExitFixupStack.clear();
 		}
 	}
 :}
@@ -1243,11 +1273,12 @@ MethodDecl ::= {: parser.isMethodContext = true; // Starting method context :}
 				StaticDeclarator VoidType MethodName:met OpenScope L_PAREN FormPars:numOfPars R_PAREN 
 				{: 
 					met.setLevel(numOfPars);
-					Tab.chainLocalSymbols(met); // Hack to enable recursion. 
+					Tab.chainLocalSymbols(met); // Hack to enable recursion and to enable distinguish formal parameter from local var. 
+					numberOfFormalParameters = Tab.currentScope().getnVars();
 				:} 
-				OpenScope VarsList L_BRACE
-				{: generateMethodStart(Tab.currentScope().getnVars() + Tab.currentScope().getOuter().getnVars()); :}
-				StatementsList R_BRACE:r CloseScope
+				VarsList L_BRACE
+				{: generateMethodStart(Tab.currentScope().getnVars()); :}
+				StatementsList R_BRACE:r
 				{:
 					if(!isVoidMethod && !doesReturnExist) {
 						parser.semantic_error("non-void method must have return.", rleft);
@@ -1256,6 +1287,7 @@ MethodDecl ::= {: parser.isMethodContext = true; // Starting method context :}
 					parser.incrementMethodsCount();
 					parser.isMethodContext = false; // Closing method context
 					doesReturnExist = false;
+					numberOfFormalParameters = 0;
 					
 					generateMethodEnd();
 					
@@ -1318,12 +1350,12 @@ Statement ::= DesignatorStatement SEMI
 				{: ReleaseFixupStacksForLevel(); :}
 				|
 				{: 
-					InitiateFixupStacksForNewLevel();
+					InitiateFixupForLoop();
 					parser.isForContext = true;
 				:}
 				ForStatement
 				{:
-					ReleaseFixupStacksForLevel();
+					ReleaseFixupForLoop();
 					parser.isForContext = !forLoopViolentExitFixupStack.empty(); // Check if we are in nested for context. 
 				:}
 				|
@@ -1411,7 +1443,9 @@ ForStatement ::=FOR L_PAREN OptionalDesignatorStatement SEMI
 					Code.putJump(forLoopLastStatementFixupAddress); // Jump back to last statement.
 					// This will be destination for condition failure, that means we won't go back to test condition again.
 					generateJumpFixupAll(failedConditionsFixupAddresses);
-					generateJumpFixup(forLoopViolentExitFixupAddress); // Fixup address so break knows where to jump out.
+					if(forLoopViolentExitFixupAddress > 0) {
+						generateJumpFixup(forLoopViolentExitFixupAddress); // Fixup address so break knows where to jump out.
+					}
 				:}
 				;
 				
