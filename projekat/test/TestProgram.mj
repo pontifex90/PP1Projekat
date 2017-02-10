@@ -20,11 +20,31 @@ bool dd;
 {
 	void main() 
 	{	
-		if(false || true && true || false) {
-			print('T');
-		} else {
-			print('F');
+		if(false) {
+			if(false) 
+				print(2);
+			else 
+				if(false)
+					print(3);
+				else {
+					print(-3);
+			print(-3);}
+			print(-2);
 		}
+		else 
+			if(false) 
+				print(22);
+			else 
+				print(-22);
+				if(true) {
+					if(true) {
+						print('t');
+					} else {
+						print('F');
+					}
+					print('X');
+				}
+		
 	}
 }
 

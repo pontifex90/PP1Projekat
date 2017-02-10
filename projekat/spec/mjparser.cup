@@ -259,11 +259,12 @@ action code {:
 	// These two represent stack for current if/else nesting level.
 	Stack<Integer> failedConditionsFixupAddresses;
 	Stack<Integer> succeededConditionsFixupAddresses;
+	int branchExitFixupAddress;
 	
 	Stack<Stack<Integer>> failedFixupStacks = new Stack<Stack<Integer>>();
-	Stack<Stack<Integer>> suceededFixupStacks = new Stack<Stack<Integer>>();
+	Stack<Stack<Integer>> succeededFixupStacks = new Stack<Stack<Integer>>();
+	Stack<Integer> branchExitFixupStack = new Stack<Integer>();
 	
-	int branchExitFixupAddress;
 	// Semantic methods
 	
 	// We have to manually link everything to class scope because of usage before last class chaining.
@@ -271,7 +272,6 @@ action code {:
 	private void ChainClassScope () {
 		parser.currentClass.getType().setMembers(parser.currentClassScope.getLocals());
 	}
-	
 	
 	private String getContextStringForUsage(String identifier) {
 		Obj currentObject = Tab.currentScope.findSymbol(identifier);
@@ -971,6 +971,35 @@ action code {:
 			Code.fixup(fixupAddresses.pop());
 		}
 	}
+	
+	// Used for tracking jump addresses in nested ifs.
+	private void InitiateFixupStacksForNewLevel() {
+		succeededFixupStacks.push(succeededConditionsFixupAddresses);
+		succeededConditionsFixupAddresses = new Stack<Integer>();
+		
+		failedFixupStacks.push(failedConditionsFixupAddresses);
+		failedConditionsFixupAddresses = new Stack<Integer>();
+		
+		branchExitFixupStack.push(branchExitFixupAddress);
+	}
+	
+	// When if is finished we need to clear fixup addresses stacks.
+	private void ReleaseFixupStacksForLevel() {
+		if(succeededFixupStacks.size() > 1 && failedFixupStacks.size() > 1) {
+			succeededConditionsFixupAddresses = succeededFixupStacks.pop();
+			failedConditionsFixupAddresses = failedFixupStacks.pop();  
+			branchExitFixupAddress = branchExitFixupStack.pop();
+		} else {
+			// It's last if, clear everything.
+			succeededConditionsFixupAddresses = null;
+			failedConditionsFixupAddresses = null;
+			branchExitFixupAddress = 0;
+			
+			succeededFixupStacks.clear();
+			failedFixupStacks.clear();
+			branchExitFixupStack.clear();
+		}
+	}
 :}
 
 terminal PROG, CLASS, THIS, CONST, EQUALS, L_BRACE, R_BRACE, L_PAREN, R_PAREN, SEMI, COMMA, L_INDEXER, R_INDEXER ;
@@ -1263,7 +1292,9 @@ FormParsList ::= FormParsList:n COMMA Type OneVar
 
 Statement ::= DesignatorStatement SEMI
 				|
+				{: InitiateFixupStacksForNewLevel(); :}
 				IfStatement
+				{: ReleaseFixupStacksForLevel(); :}
 				|
 				ForStatement
 				|
