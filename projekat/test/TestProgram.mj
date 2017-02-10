@@ -21,15 +21,15 @@ bool dd;
 	void main() 
 	int x, y, z;
 	{	
-		for( x = 0 ; x <= 2; x++) {
 			for( y = 0 ; y < 2; y++) {
 				for( z = 100 * 2 - 198 ; z > 0; z -= 1) {
 					print(x);
-					print(y);
+					print(y); 
+					if(z == 2) { continue; }
 					print(z);
-				}			
+				}
 			}
-		}
+
 	}
 }
 

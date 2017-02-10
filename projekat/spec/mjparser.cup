@@ -263,6 +263,7 @@ action code {:
 	Integer branchExitFixupAddress = new Integer(0);
 	Integer forLoopLastStatementSkipFixupAddress = new Integer(0);
 	Integer forLoopLastStatementFixupAddress = new Integer(0);
+	Integer forLoopViolentExitFixupAddress = new Integer(0);
 	
 	// Following stacks are used to keep track of jumping fixup addresses when nesting if/else and for loops.
 	Stack<Stack<Integer>> failedFixupStacks = new Stack<Stack<Integer>>();
@@ -270,6 +271,7 @@ action code {:
 	Stack<Integer> branchExitFixupStack = new Stack<Integer>();
 	Stack<Integer> forLoopEndStatementFixupStack = new Stack<Integer>();
 	Stack<Integer> forLoopContentFixupStack = new Stack<Integer>();
+	Stack<Integer> forLoopViolentExitFixupStack = new Stack<Integer>();
 	
 	// Semantic methods
 	
@@ -990,6 +992,7 @@ action code {:
 		branchExitFixupStack.push(branchExitFixupAddress);
 		forLoopEndStatementFixupStack.push(forLoopLastStatementSkipFixupAddress);
 		forLoopContentFixupStack.push(forLoopLastStatementFixupAddress);
+		forLoopViolentExitFixupStack.push(forLoopViolentExitFixupAddress);
 	}
 	
 	// When if or for is finished we need to clear fixup addresses stacks.
@@ -1000,6 +1003,7 @@ action code {:
 			branchExitFixupAddress = branchExitFixupStack.pop();
 			forLoopLastStatementSkipFixupAddress = forLoopEndStatementFixupStack.pop();
 			forLoopLastStatementFixupAddress = forLoopContentFixupStack.pop();
+			forLoopViolentExitFixupAddress = forLoopViolentExitFixupStack.pop();
 		} else {
 			// It's last if, clear everything.
 			succeededConditionsFixupAddresses = null;
@@ -1007,12 +1011,14 @@ action code {:
 			branchExitFixupAddress = 0;
 			forLoopLastStatementSkipFixupAddress = 0;
 			forLoopLastStatementFixupAddress = 0;
+			forLoopViolentExitFixupAddress = 0;
 			
 			succeededFixupStacks.clear();
 			failedFixupStacks.clear();
 			branchExitFixupStack.clear();
 			forLoopEndStatementFixupStack.clear();
 			forLoopContentFixupStack.clear();
+			forLoopViolentExitFixupStack.clear();
 		}
 	}
 :}
@@ -1311,15 +1317,27 @@ Statement ::= DesignatorStatement SEMI
 				IfStatement
 				{: ReleaseFixupStacksForLevel(); :}
 				|
-				{: InitiateFixupStacksForNewLevel(); :}
+				{: 
+					InitiateFixupStacksForNewLevel();
+					parser.isForContext = true;
+				:}
 				ForStatement
-				{: ReleaseFixupStacksForLevel(); :}
+				{:
+					ReleaseFixupStacksForLevel();
+					parser.isForContext = !forLoopViolentExitFixupStack.empty(); // Check if we are in nested for context. 
+				:}
 				|
 				BREAK SEMI:s
-				{: breakContinueCheck(sleft); :}
+				{: 
+					breakContinueCheck(sleft);
+					forLoopViolentExitFixupAddress = generateUnconditionalJump(); // Jump to loop exit. 
+				:}
 				|
 				CONTINUE SEMI:s
-				{: breakContinueCheck(sleft); :}
+				{: 
+					breakContinueCheck(sleft);
+					Code.putJump(forLoopLastStatementFixupAddress); // Jump back to last loop statement.
+				:}
 				|
 				Return:ret
 				{:
@@ -1378,8 +1396,7 @@ Return ::= RETURN SEMI:s
 			:}
 			;
 				
-ForStatement ::={: parser.isForContext = true; :} 
-				FOR L_PAREN OptionalDesignatorStatement SEMI 
+ForStatement ::=FOR L_PAREN OptionalDesignatorStatement SEMI 
 				{: branchExitFixupAddress = Code.pc; // Save address of where condition is so we can get back to it. :}
 				OptionalCondition SEMI
 				{: 
@@ -1394,8 +1411,8 @@ ForStatement ::={: parser.isForContext = true; :}
 					Code.putJump(forLoopLastStatementFixupAddress); // Jump back to last statement.
 					// This will be destination for condition failure, that means we won't go back to test condition again.
 					generateJumpFixupAll(failedConditionsFixupAddresses);
+					generateJumpFixup(forLoopViolentExitFixupAddress); // Fixup address so break knows where to jump out.
 				:}
-				{: parser.isForContext = false; :}
 				;
 				
 OptionalDesignatorStatement ::= DesignatorStatement
