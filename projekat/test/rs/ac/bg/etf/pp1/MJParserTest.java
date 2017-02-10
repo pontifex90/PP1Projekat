@@ -24,7 +24,7 @@ public class MJParserTest {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		Logger log = Logger.getLogger(MJParserTest.class);
+		Logger log = Logger.getLogger(MJParser.class);
 		
 		if (args.length < 2) {
 			log.error("Invalid arguments! Usage: MJParserTest <source-file> <obj-file> ");
