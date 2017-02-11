@@ -169,13 +169,8 @@ parser code {:
     }
 
   	public void usage_info(Obj usedObject, String message, int line) {
-  		String visitorMessage = "";
-  		if(usedObject != null) {
-	  		DumpSymbolTableVisitor visitor = new DumpSymbolTableVisitor();
-			//visitor.visitObjNode(usedObject);
-			//visitorMessage = " [ " + visitor.getOutput() + "]"; 
-		}
-		report("Usage info on line " + line + ": " + message + visitorMessage, null, LOG_TYPE.DEBUG);
+  		String objectInfo = " [ kind:" + usedObject.getKind() + "  name: " + usedObject.getName() +"  type: "+ usedObject.getType().getKind() +"]";
+		report("Usage info on line " + line + ": " + message + objectInfo, null, LOG_TYPE.DEBUG);
 	}
 
   	public void semantic_info(String message, int line) {
@@ -183,11 +178,9 @@ parser code {:
 	}
 	
 	public void log_symbol_detected(Obj object, String message, int line) {
-		DumpSymbolTableVisitor visitor = new DumpSymbolTableVisitor();
-		//visitor.visitObjNode(object);
-        
- 		//semantic_info(message + " [ " + visitor.getOutput() + "]", line);
- 		semantic_info(message + " [ FIX THIS ]", line);
+		String objectInfo = " [ kind: " + object.getKind() + "  name: " + object.getName() +"  type: "+ object.getType().getKind() +"]";
+		
+		semantic_info(message + objectInfo, line);
 	}
 	
     public void report(String message, Object info, LOG_TYPE logType) {

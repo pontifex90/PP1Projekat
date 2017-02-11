@@ -1,24 +1,11 @@
 
 program test4
 
-class A {
-	int classVar = 3;
-	{
-		int method(int a) {
-		
-		}
-	}
-}
-
-class B extends A aa + {
-
-}
-
 {
 	void main(int a[])
-	A a;
+	int ad;
 	{
-		a.method(a + a + + =);
+		ad = 4;
 	}
 }
 
