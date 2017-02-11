@@ -1,0 +1,57 @@
+
+program test10
+
+char globalChar;
+class A {
+	char a;
+	{
+		void changeA(char d) {
+			a = d;
+		}
+		static void printObject(A someObject) {
+			a = 'd';
+			this.a = 'd';
+			changeA('d');
+		}
+		
+	}
+}
+
+class B  extends int {
+	
+}
+
+class C extends C {
+
+}
+
+class D extends A {
+	{
+		static void printObject(A someObject) {
+			return 3;
+		}
+	}
+}
+
+{	
+	void main()
+	A a;
+	B b;
+	asdf f;
+	{	
+		a = new int;
+		b = new A;
+		b = new fas;
+		a.a = true;
+		a.changeA();
+		a.changeA(4);
+		a.a();
+		a.changeA = 22;
+		a.a += a.changeA;
+		A.printObject(a);
+		a.printObject(a);
+		a.fa = 3;
+		this.a = 44;
+	}
+}
+

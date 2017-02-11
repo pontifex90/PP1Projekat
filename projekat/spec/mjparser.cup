@@ -69,10 +69,9 @@ parser code {:
 	        log.info("Class vars number: " + p.classGlobalVarsCount);
 	        log.info("Main function vars number: " + p.mainFunctionVarsCount + "\n===============================\n");
 	        log.info("\n===============================\nFUNCTION CALLS COUNTING:");
-	        log.info("Global function calls: " + p.globalFuncCount);
-	        log.info("Global static function calls: " + p.globalStaticFuncCount);
-	        log.info("Class function calls: " + p.classFuncCount);
-	        log.info("Class static function calls: " + p.classStaticFuncCount);
+	        log.info("Global functions: " + p.globalFuncCount);
+	        log.info("Class functions: " + p.classFuncCount);
+	        log.info("Class static functions: " + p.classStaticFuncCount);
 	        log.info("Statements block number: " + p.statementsBlockCount);
 	        log.info("Main method function calls number: " + p.mainMethodFunctionCallsCount);
 	        log.info("Function formal parameters number: " + p.functionFormParsCount);
@@ -161,7 +160,7 @@ parser code {:
     }
   	
   	public void semantic_error(String message, int line) {
-        report("Semantic error on line " + line + ", couldn't recognize: " + message, null, LOG_TYPE.ERROR);
+        report("Semantic error on line " + line + ": " + message, null, LOG_TYPE.ERROR);
     }
 
   	public void code_generation_error(String message, int line) {
@@ -169,7 +168,10 @@ parser code {:
     }
 
   	public void usage_info(Obj usedObject, String message, int line) {
-  		String objectInfo = " [ kind:" + usedObject.getKind() + "  name: " + usedObject.getName() +"  type: "+ usedObject.getType().getKind() +"]";
+  		String objectInfo = "";
+  		if(usedObject != null) { 
+  			objectInfo = " [ kind:" + usedObject.getKind() + "  name: " + usedObject.getName() +"  type: "+ usedObject.getType().getKind() +"]";
+  		}
 		report("Usage info on line " + line + ": " + message + objectInfo, null, LOG_TYPE.DEBUG);
 	}
 
@@ -178,7 +180,10 @@ parser code {:
 	}
 	
 	public void log_symbol_detected(Obj object, String message, int line) {
-		String objectInfo = " [ kind: " + object.getKind() + "  name: " + object.getName() +"  type: "+ object.getType().getKind() +"]";
+		String objectInfo = "";
+		if(object != null) {
+			objectInfo = " [ kind: " + object.getKind() + "  name: " + object.getName() +"  type: "+ object.getType().getKind() +"]";
+		}	
 		
 		semantic_info(message + objectInfo, line);
 	}

@@ -1,0 +1,25 @@
+
+program test8
+const int a = true, b = 4;
+const char x = 34;
+
+int aa, bb, cc;
+bool d;
+
+{	
+	void method(int a) {
+		a = this.a = a;
+	}
+
+	void main()
+	int a[];
+	int b;
+	bool f;
+	{	
+		mmm = 4;
+		aa = d;
+		b = a;
+		b += a + 3 += a;
+	}
+}
+

@@ -1,0 +1,65 @@
+program test11
+
+const int a = 3, b = 4;
+
+int globalInt;
+
+class A {
+	int l;
+	{
+		void incrementL() {
+			l++;
+		}
+	}
+}
+
+class B extends A {
+	{
+		static void someStaticMethod() {
+			print(eol); 
+			print('S');
+		}
+	}
+}
+
+{
+	
+	void main() 
+	A aaa;
+	B bbb;
+	int a, b;
+	{
+		aaa = new A;
+		aaa.incrementL();
+		aaa.incrementL();
+		aaa.incrementL();
+		
+		print(aaa.l);
+		
+		bbb = new B;
+		bbb.l = 5;
+		print(bbb.l);
+		
+		B.someStaticMethod();
+		
+		a = 3;
+		for(;a>0; a--) {
+			print(a-1);
+		}
+		
+		print(eol);
+		for(a = 0; a < 10; a +=1) {
+			if(a % 2 == 0) { continue; }
+			print(a);
+		} 
+		print(eol);
+		a = 0;
+		for(;;) {
+			a++;
+			for(b=2; b > 0; b--) {
+				print(b);
+			}
+			if(a==2) { break; }
+		}
+	}
+}

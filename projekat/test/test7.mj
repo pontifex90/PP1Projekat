@@ -1,0 +1,40 @@
+
+program test7
+
+char globalChar;
+class A {
+	char a;
+	{
+		static void printObject(A someObject) {
+			print(globalChar);	
+		}
+		
+		void changeA(char d) {
+			a = d;
+		}
+	}
+}
+
+class B  extends A {
+	
+}
+
+{	
+	void main()
+	A a;
+	B b;
+	{		
+		globalChar = 'Y';
+		A.printObject(a);
+		
+		a = new A;
+		a.a = 'd';
+		a.changeA('l');
+		print(a.a);
+		
+		b = new B;
+		b.a = 'w';
+		print(b.a);
+	}
+}
+

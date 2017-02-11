@@ -1,0 +1,41 @@
+
+program test9
+
+{	
+	int someMethod(int a, int b) {
+		return;
+	}
+	
+	void someMethod2() {
+		return 3;
+	}
+
+	void main()
+	int a[];
+	int b;
+	bool f;
+	{	
+		someMethod2 = true;
+		someMethod2(a, b);
+		someMethod(1);
+		someMethod(1, true);
+		a = someMethod(2,3);
+		a[a] = 3;
+		a++;
+		a[2 + 8] = 18;
+		a[2 + 8] = true;
+		a = a;
+		a[a[a[a[2]]]] = 10;
+		if(2 + 2) {
+			break;
+			continue;
+		}
+		if(f > 3) {
+		
+		}
+		for(;a > 0 && a < 3;) {
+			break;
+		}
+	}
+}
+

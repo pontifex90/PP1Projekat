@@ -1,0 +1,19 @@
+
+program test5
+const int a = 4, b = 6;
+
+int aa, bb;
+bool boo;
+
+{
+	void main()
+	int ad;
+	{
+		boo = true;
+		aa += a;
+		aa = bb;
+		ad = 4 - bb * aa + b - 2 * a;
+		boo = false;
+	}
+}
+

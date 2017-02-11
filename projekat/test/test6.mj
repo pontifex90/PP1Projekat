@@ -1,0 +1,27 @@
+
+program test6
+
+int aa, bb;
+
+{	
+	int someMethod(int x, int y) {
+		return x + y;
+	}
+	
+	void printSomething(char c) {
+		print(c);
+	}
+	
+	void main()
+	int ad;
+	bool boolArray[];
+	{
+		boolArray = new bool[3];
+		
+		boolArray[ad + bb] = false;
+		aa = someMethod(aa, bb);
+		
+		printSomething('c');
+	}
+}
+
