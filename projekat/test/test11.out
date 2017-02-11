@@ -1,0 +1,350 @@
+INFO  2017-02-11 06:20:15,847 [main][MJParser.java:615] : Compiling source file: D:\PP1ProjekatRepo\PP1Projekat\projekat\test\test11.mj
+INFO  2017-02-11 06:20:15,859 [main][MJParser.java:588] : #2 program
+INFO  2017-02-11 06:20:15,860 [main][MJParser.java:588] : #49 test11
+INFO  2017-02-11 06:20:15,860 [main][MJParser.java:588] : #5 const
+DEBUG 2017-02-11 06:20:15,861 [main][MJParser.java:770] : Semantic info on line 1: added program "test11" to symbol table. [ kind: 6  name: test11  type: 0]
+INFO  2017-02-11 06:20:15,863 [main][MJParser.java:588] : #49 int
+INFO  2017-02-11 06:20:15,863 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:20:15,863 [main][MJParser.java:588] : #6 =
+INFO  2017-02-11 06:20:15,863 [main][MJParser.java:588] : #48 3
+INFO  2017-02-11 06:20:15,863 [main][MJParser.java:588] : #12 ,
+DEBUG 2017-02-11 06:20:15,864 [main][MJParser.java:770] : Semantic info on line 3: added constant "a" to symbol table. [ kind: 0  name: a  type: 1]
+INFO  2017-02-11 06:20:15,864 [main][MJParser.java:588] : #49 b
+INFO  2017-02-11 06:20:15,864 [main][MJParser.java:588] : #6 =
+INFO  2017-02-11 06:20:15,865 [main][MJParser.java:588] : #48 4
+INFO  2017-02-11 06:20:15,865 [main][MJParser.java:588] : #11 ;
+DEBUG 2017-02-11 06:20:15,865 [main][MJParser.java:770] : Semantic info on line 3: added constant "b" to symbol table. [ kind: 0  name: b  type: 1]
+INFO  2017-02-11 06:20:15,866 [main][MJParser.java:588] : #49 int
+INFO  2017-02-11 06:20:15,866 [main][MJParser.java:588] : #49 globalInt
+INFO  2017-02-11 06:20:15,866 [main][MJParser.java:588] : #11 ;
+DEBUG 2017-02-11 06:20:15,866 [main][MJParser.java:770] : Semantic info on line 5: added global variable "globalInt" to symbol table. [ kind: 1  name: globalInt  type: 1]
+INFO  2017-02-11 06:20:15,866 [main][MJParser.java:588] : #3 class
+INFO  2017-02-11 06:20:15,866 [main][MJParser.java:588] : #49 A
+INFO  2017-02-11 06:20:15,866 [main][MJParser.java:588] : #7 {
+DEBUG 2017-02-11 06:20:15,867 [main][MJParser.java:770] : Semantic info on line 7: added class type "A" to symbol table. [ kind: 2  name: A  type: 4]
+INFO  2017-02-11 06:20:15,867 [main][MJParser.java:588] : #49 int
+INFO  2017-02-11 06:20:15,867 [main][MJParser.java:588] : #49 l
+INFO  2017-02-11 06:20:15,867 [main][MJParser.java:588] : #11 ;
+DEBUG 2017-02-11 06:20:15,867 [main][MJParser.java:770] : Semantic info on line 8: added class variable "l" to symbol table. [ kind: 4  name: l  type: 1]
+INFO  2017-02-11 06:20:15,867 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:20:15,867 [main][MJParser.java:588] : #17 void
+INFO  2017-02-11 06:20:15,867 [main][MJParser.java:588] : #49 incrementL
+INFO  2017-02-11 06:20:15,867 [main][MJParser.java:588] : #9 (
+DEBUG 2017-02-11 06:20:15,868 [main][MJParser.java:770] : Semantic info on line 10: added  method "incrementL" to symbol table. [ kind: 3  name: incrementL  type: 0]
+INFO  2017-02-11 06:20:15,868 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:20:15,868 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:20:15,868 [main][MJParser.java:588] : #49 l
+INFO  2017-02-11 06:20:15,868 [main][MJParser.java:588] : #19 ++
+DEBUG 2017-02-11 06:20:15,868 [main][MJParser.java:770] : Usage info on line 11: class variable "l" used. [ kind:4  name: l  type: 1]
+INFO  2017-02-11 06:20:15,868 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,868 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:20:15,868 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:20:15,868 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:20:15,868 [main][MJParser.java:588] : #3 class
+INFO  2017-02-11 06:20:15,868 [main][MJParser.java:588] : #49 B
+INFO  2017-02-11 06:20:15,869 [main][MJParser.java:588] : #15 extends
+DEBUG 2017-02-11 06:20:15,869 [main][MJParser.java:770] : Semantic info on line 16: added class type "B" to symbol table. [ kind: 2  name: B  type: 4]
+INFO  2017-02-11 06:20:15,869 [main][MJParser.java:588] : #49 A
+INFO  2017-02-11 06:20:15,869 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:20:15,869 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:20:15,869 [main][MJParser.java:588] : #16 static
+INFO  2017-02-11 06:20:15,869 [main][MJParser.java:588] : #17 void
+INFO  2017-02-11 06:20:15,869 [main][MJParser.java:588] : #49 someStaticMethod
+INFO  2017-02-11 06:20:15,869 [main][MJParser.java:588] : #9 (
+DEBUG 2017-02-11 06:20:15,869 [main][MJParser.java:770] : Semantic info on line 18: added static method "someStaticMethod" to symbol table. [ kind: 3  name: someStaticMethod  type: 0]
+INFO  2017-02-11 06:20:15,869 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:20:15,869 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:20:15,869 [main][MJParser.java:588] : #23 print
+INFO  2017-02-11 06:20:15,870 [main][MJParser.java:588] : #9 (
+INFO  2017-02-11 06:20:15,870 [main][MJParser.java:588] : #49 eol
+INFO  2017-02-11 06:20:15,870 [main][MJParser.java:588] : #10 )
+DEBUG 2017-02-11 06:20:15,870 [main][MJParser.java:770] : Usage info on line 19: constant "eol" used. [ kind:0  name: eol  type: 2]
+INFO  2017-02-11 06:20:15,870 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,870 [main][MJParser.java:588] : #23 print
+INFO  2017-02-11 06:20:15,870 [main][MJParser.java:588] : #9 (
+INFO  2017-02-11 06:20:15,870 [main][MJParser.java:588] : #50 S
+INFO  2017-02-11 06:20:15,870 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:20:15,870 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,870 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:20:15,870 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:20:15,870 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:20:15,871 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:20:15,871 [main][MJParser.java:588] : #17 void
+INFO  2017-02-11 06:20:15,871 [main][MJParser.java:588] : #49 main
+INFO  2017-02-11 06:20:15,871 [main][MJParser.java:588] : #9 (
+DEBUG 2017-02-11 06:20:15,871 [main][MJParser.java:770] : Semantic info on line 27: added  method "main" to symbol table. [ kind: 3  name: main  type: 0]
+INFO  2017-02-11 06:20:15,871 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:20:15,871 [main][MJParser.java:588] : #49 A
+INFO  2017-02-11 06:20:15,871 [main][MJParser.java:588] : #49 aaa
+INFO  2017-02-11 06:20:15,871 [main][MJParser.java:588] : #11 ;
+DEBUG 2017-02-11 06:20:15,871 [main][MJParser.java:770] : Semantic info on line 28: added local variable "aaa" to symbol table. [ kind: 1  name: aaa  type: 4]
+INFO  2017-02-11 06:20:15,871 [main][MJParser.java:588] : #49 B
+INFO  2017-02-11 06:20:15,871 [main][MJParser.java:588] : #49 bbb
+INFO  2017-02-11 06:20:15,871 [main][MJParser.java:588] : #11 ;
+DEBUG 2017-02-11 06:20:15,871 [main][MJParser.java:770] : Semantic info on line 29: added local variable "bbb" to symbol table. [ kind: 1  name: bbb  type: 4]
+INFO  2017-02-11 06:20:15,872 [main][MJParser.java:588] : #49 int
+INFO  2017-02-11 06:20:15,872 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:20:15,872 [main][MJParser.java:588] : #12 ,
+DEBUG 2017-02-11 06:20:15,872 [main][MJParser.java:770] : Semantic info on line 30: added local variable "a" to symbol table. [ kind: 1  name: a  type: 1]
+INFO  2017-02-11 06:20:15,872 [main][MJParser.java:588] : #49 b
+INFO  2017-02-11 06:20:15,872 [main][MJParser.java:588] : #11 ;
+DEBUG 2017-02-11 06:20:15,872 [main][MJParser.java:770] : Semantic info on line 30: added local variable "b" to symbol table. [ kind: 1  name: b  type: 1]
+INFO  2017-02-11 06:20:15,872 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:20:15,872 [main][MJParser.java:588] : #49 aaa
+INFO  2017-02-11 06:20:15,872 [main][MJParser.java:588] : #6 =
+DEBUG 2017-02-11 06:20:15,872 [main][MJParser.java:770] : Usage info on line 32: local variable "aaa" used. [ kind:1  name: aaa  type: 4]
+INFO  2017-02-11 06:20:15,872 [main][MJParser.java:588] : #21 new
+INFO  2017-02-11 06:20:15,873 [main][MJParser.java:588] : #49 A
+INFO  2017-02-11 06:20:15,873 [main][MJParser.java:588] : #11 ;
+DEBUG 2017-02-11 06:20:15,873 [main][MJParser.java:770] : Usage info on line 32: instantiated new object of type "A".
+INFO  2017-02-11 06:20:15,873 [main][MJParser.java:588] : #49 aaa
+INFO  2017-02-11 06:20:15,873 [main][MJParser.java:588] : #18 .
+DEBUG 2017-02-11 06:20:15,873 [main][MJParser.java:770] : Usage info on line 33: local variable "aaa" used. [ kind:1  name: aaa  type: 4]
+INFO  2017-02-11 06:20:15,873 [main][MJParser.java:588] : #49 incrementL
+INFO  2017-02-11 06:20:15,873 [main][MJParser.java:588] : #9 (
+DEBUG 2017-02-11 06:20:15,873 [main][MJParser.java:770] : Usage info on line 33: class method "incrementL" of class "aaa" used. [ kind:3  name: incrementL  type: 0]
+INFO  2017-02-11 06:20:15,873 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:20:15,873 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,873 [main][MJParser.java:588] : #49 aaa
+INFO  2017-02-11 06:20:15,873 [main][MJParser.java:588] : #18 .
+DEBUG 2017-02-11 06:20:15,873 [main][MJParser.java:770] : Usage info on line 34: local variable "aaa" used. [ kind:1  name: aaa  type: 4]
+INFO  2017-02-11 06:20:15,874 [main][MJParser.java:588] : #49 incrementL
+INFO  2017-02-11 06:20:15,874 [main][MJParser.java:588] : #9 (
+DEBUG 2017-02-11 06:20:15,874 [main][MJParser.java:770] : Usage info on line 34: class method "incrementL" of class "aaa" used. [ kind:3  name: incrementL  type: 0]
+INFO  2017-02-11 06:20:15,874 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:20:15,874 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,874 [main][MJParser.java:588] : #49 aaa
+INFO  2017-02-11 06:20:15,874 [main][MJParser.java:588] : #18 .
+DEBUG 2017-02-11 06:20:15,874 [main][MJParser.java:770] : Usage info on line 35: local variable "aaa" used. [ kind:1  name: aaa  type: 4]
+INFO  2017-02-11 06:20:15,874 [main][MJParser.java:588] : #49 incrementL
+INFO  2017-02-11 06:20:15,874 [main][MJParser.java:588] : #9 (
+DEBUG 2017-02-11 06:20:15,874 [main][MJParser.java:770] : Usage info on line 35: class method "incrementL" of class "aaa" used. [ kind:3  name: incrementL  type: 0]
+INFO  2017-02-11 06:20:15,874 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:20:15,874 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,874 [main][MJParser.java:588] : #23 print
+INFO  2017-02-11 06:20:15,875 [main][MJParser.java:588] : #9 (
+INFO  2017-02-11 06:20:15,875 [main][MJParser.java:588] : #49 aaa
+INFO  2017-02-11 06:20:15,875 [main][MJParser.java:588] : #18 .
+DEBUG 2017-02-11 06:20:15,875 [main][MJParser.java:770] : Usage info on line 37: local variable "aaa" used. [ kind:1  name: aaa  type: 4]
+INFO  2017-02-11 06:20:15,875 [main][MJParser.java:588] : #49 l
+INFO  2017-02-11 06:20:15,875 [main][MJParser.java:588] : #10 )
+DEBUG 2017-02-11 06:20:15,875 [main][MJParser.java:770] : Usage info on line 37: class field "l" of class "aaa" used. [ kind:4  name: l  type: 1]
+INFO  2017-02-11 06:20:15,875 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,875 [main][MJParser.java:588] : #49 bbb
+INFO  2017-02-11 06:20:15,875 [main][MJParser.java:588] : #6 =
+DEBUG 2017-02-11 06:20:15,875 [main][MJParser.java:770] : Usage info on line 39: local variable "bbb" used. [ kind:1  name: bbb  type: 4]
+INFO  2017-02-11 06:20:15,875 [main][MJParser.java:588] : #21 new
+INFO  2017-02-11 06:20:15,875 [main][MJParser.java:588] : #49 B
+INFO  2017-02-11 06:20:15,875 [main][MJParser.java:588] : #11 ;
+DEBUG 2017-02-11 06:20:15,875 [main][MJParser.java:770] : Usage info on line 39: instantiated new object of type "B".
+INFO  2017-02-11 06:20:15,876 [main][MJParser.java:588] : #49 bbb
+INFO  2017-02-11 06:20:15,876 [main][MJParser.java:588] : #18 .
+DEBUG 2017-02-11 06:20:15,876 [main][MJParser.java:770] : Usage info on line 40: local variable "bbb" used. [ kind:1  name: bbb  type: 4]
+INFO  2017-02-11 06:20:15,876 [main][MJParser.java:588] : #49 l
+INFO  2017-02-11 06:20:15,876 [main][MJParser.java:588] : #6 =
+DEBUG 2017-02-11 06:20:15,876 [main][MJParser.java:770] : Usage info on line 40: class field "l" of class "bbb" used. [ kind:4  name: super.l  type: 1]
+INFO  2017-02-11 06:20:15,876 [main][MJParser.java:588] : #48 5
+INFO  2017-02-11 06:20:15,876 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,876 [main][MJParser.java:588] : #23 print
+INFO  2017-02-11 06:20:15,876 [main][MJParser.java:588] : #9 (
+INFO  2017-02-11 06:20:15,876 [main][MJParser.java:588] : #49 bbb
+INFO  2017-02-11 06:20:15,876 [main][MJParser.java:588] : #18 .
+DEBUG 2017-02-11 06:20:15,876 [main][MJParser.java:770] : Usage info on line 41: local variable "bbb" used. [ kind:1  name: bbb  type: 4]
+INFO  2017-02-11 06:20:15,876 [main][MJParser.java:588] : #49 l
+INFO  2017-02-11 06:20:15,876 [main][MJParser.java:588] : #10 )
+DEBUG 2017-02-11 06:20:15,877 [main][MJParser.java:770] : Usage info on line 41: class field "l" of class "bbb" used. [ kind:4  name: super.l  type: 1]
+INFO  2017-02-11 06:20:15,877 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,877 [main][MJParser.java:588] : #49 B
+INFO  2017-02-11 06:20:15,877 [main][MJParser.java:588] : #18 .
+DEBUG 2017-02-11 06:20:15,877 [main][MJParser.java:770] : Usage info on line 43: static member of "B" class used. [ kind:2  name: B  type: 4]
+INFO  2017-02-11 06:20:15,877 [main][MJParser.java:588] : #49 someStaticMethod
+INFO  2017-02-11 06:20:15,877 [main][MJParser.java:588] : #9 (
+DEBUG 2017-02-11 06:20:15,877 [main][MJParser.java:770] : Usage info on line 43: class method "someStaticMethod" of class "B" used. [ kind:3  name: someStaticMethod  type: 0]
+INFO  2017-02-11 06:20:15,877 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:20:15,877 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,877 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:20:15,877 [main][MJParser.java:588] : #6 =
+DEBUG 2017-02-11 06:20:15,877 [main][MJParser.java:770] : Usage info on line 45: local variable "a" used. [ kind:1  name: a  type: 1]
+INFO  2017-02-11 06:20:15,877 [main][MJParser.java:588] : #48 3
+INFO  2017-02-11 06:20:15,877 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,877 [main][MJParser.java:588] : #22 for
+INFO  2017-02-11 06:20:15,878 [main][MJParser.java:588] : #9 (
+INFO  2017-02-11 06:20:15,878 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,878 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:20:15,878 [main][MJParser.java:588] : #44 >
+DEBUG 2017-02-11 06:20:15,878 [main][MJParser.java:770] : Usage info on line 46: local variable "a" used. [ kind:1  name: a  type: 1]
+INFO  2017-02-11 06:20:15,878 [main][MJParser.java:588] : #48 0
+INFO  2017-02-11 06:20:15,878 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,878 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:20:15,878 [main][MJParser.java:588] : #20 --
+DEBUG 2017-02-11 06:20:15,878 [main][MJParser.java:770] : Usage info on line 46: local variable "a" used. [ kind:1  name: a  type: 1]
+INFO  2017-02-11 06:20:15,878 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:20:15,878 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:20:15,878 [main][MJParser.java:588] : #23 print
+INFO  2017-02-11 06:20:15,878 [main][MJParser.java:588] : #9 (
+INFO  2017-02-11 06:20:15,878 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:20:15,878 [main][MJParser.java:588] : #29 -
+DEBUG 2017-02-11 06:20:15,879 [main][MJParser.java:770] : Usage info on line 47: local variable "a" used. [ kind:1  name: a  type: 1]
+INFO  2017-02-11 06:20:15,879 [main][MJParser.java:588] : #48 1
+INFO  2017-02-11 06:20:15,879 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:20:15,879 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,879 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:20:15,879 [main][MJParser.java:588] : #23 print
+INFO  2017-02-11 06:20:15,879 [main][MJParser.java:588] : #9 (
+INFO  2017-02-11 06:20:15,879 [main][MJParser.java:588] : #49 eol
+INFO  2017-02-11 06:20:15,879 [main][MJParser.java:588] : #10 )
+DEBUG 2017-02-11 06:20:15,879 [main][MJParser.java:770] : Usage info on line 50: constant "eol" used. [ kind:0  name: eol  type: 2]
+INFO  2017-02-11 06:20:15,879 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,879 [main][MJParser.java:588] : #22 for
+INFO  2017-02-11 06:20:15,879 [main][MJParser.java:588] : #9 (
+INFO  2017-02-11 06:20:15,879 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:20:15,879 [main][MJParser.java:588] : #6 =
+DEBUG 2017-02-11 06:20:15,880 [main][MJParser.java:770] : Usage info on line 51: local variable "a" used. [ kind:1  name: a  type: 1]
+INFO  2017-02-11 06:20:15,880 [main][MJParser.java:588] : #48 0
+INFO  2017-02-11 06:20:15,880 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,880 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:20:15,880 [main][MJParser.java:588] : #46 <
+DEBUG 2017-02-11 06:20:15,880 [main][MJParser.java:770] : Usage info on line 51: local variable "a" used. [ kind:1  name: a  type: 1]
+INFO  2017-02-11 06:20:15,880 [main][MJParser.java:588] : #48 10
+INFO  2017-02-11 06:20:15,880 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,880 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:20:15,880 [main][MJParser.java:588] : #30 +=
+DEBUG 2017-02-11 06:20:15,880 [main][MJParser.java:770] : Usage info on line 51: local variable "a" used. [ kind:1  name: a  type: 1]
+INFO  2017-02-11 06:20:15,880 [main][MJParser.java:588] : #48 1
+INFO  2017-02-11 06:20:15,880 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:20:15,880 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:20:15,880 [main][MJParser.java:588] : #38 if
+INFO  2017-02-11 06:20:15,881 [main][MJParser.java:588] : #9 (
+INFO  2017-02-11 06:20:15,881 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:20:15,881 [main][MJParser.java:588] : #34 %
+DEBUG 2017-02-11 06:20:15,881 [main][MJParser.java:770] : Usage info on line 52: local variable "a" used. [ kind:1  name: a  type: 1]
+INFO  2017-02-11 06:20:15,881 [main][MJParser.java:588] : #48 2
+INFO  2017-02-11 06:20:15,881 [main][MJParser.java:588] : #42 ==
+INFO  2017-02-11 06:20:15,881 [main][MJParser.java:588] : #48 0
+INFO  2017-02-11 06:20:15,881 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:20:15,881 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:20:15,881 [main][MJParser.java:588] : #25 continue
+INFO  2017-02-11 06:20:15,881 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,881 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:20:15,881 [main][MJParser.java:588] : #23 print
+INFO  2017-02-11 06:20:15,881 [main][MJParser.java:588] : #9 (
+INFO  2017-02-11 06:20:15,881 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:20:15,882 [main][MJParser.java:588] : #10 )
+DEBUG 2017-02-11 06:20:15,882 [main][MJParser.java:770] : Usage info on line 53: local variable "a" used. [ kind:1  name: a  type: 1]
+INFO  2017-02-11 06:20:15,882 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,882 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:20:15,882 [main][MJParser.java:588] : #23 print
+INFO  2017-02-11 06:20:15,882 [main][MJParser.java:588] : #9 (
+INFO  2017-02-11 06:20:15,882 [main][MJParser.java:588] : #49 eol
+INFO  2017-02-11 06:20:15,882 [main][MJParser.java:588] : #10 )
+DEBUG 2017-02-11 06:20:15,882 [main][MJParser.java:770] : Usage info on line 55: constant "eol" used. [ kind:0  name: eol  type: 2]
+INFO  2017-02-11 06:20:15,882 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,882 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:20:15,882 [main][MJParser.java:588] : #6 =
+DEBUG 2017-02-11 06:20:15,882 [main][MJParser.java:770] : Usage info on line 56: local variable "a" used. [ kind:1  name: a  type: 1]
+INFO  2017-02-11 06:20:15,882 [main][MJParser.java:588] : #48 0
+INFO  2017-02-11 06:20:15,882 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,882 [main][MJParser.java:588] : #22 for
+INFO  2017-02-11 06:20:15,883 [main][MJParser.java:588] : #9 (
+INFO  2017-02-11 06:20:15,883 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,883 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,883 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:20:15,883 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:20:15,883 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:20:15,883 [main][MJParser.java:588] : #19 ++
+DEBUG 2017-02-11 06:20:15,883 [main][MJParser.java:770] : Usage info on line 58: local variable "a" used. [ kind:1  name: a  type: 1]
+INFO  2017-02-11 06:20:15,883 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,886 [main][MJParser.java:588] : #22 for
+INFO  2017-02-11 06:20:15,886 [main][MJParser.java:588] : #9 (
+INFO  2017-02-11 06:20:15,886 [main][MJParser.java:588] : #49 b
+INFO  2017-02-11 06:20:15,886 [main][MJParser.java:588] : #6 =
+DEBUG 2017-02-11 06:20:15,886 [main][MJParser.java:770] : Usage info on line 59: local variable "b" used. [ kind:1  name: b  type: 1]
+INFO  2017-02-11 06:20:15,886 [main][MJParser.java:588] : #48 2
+INFO  2017-02-11 06:20:15,886 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,887 [main][MJParser.java:588] : #49 b
+INFO  2017-02-11 06:20:15,887 [main][MJParser.java:588] : #44 >
+DEBUG 2017-02-11 06:20:15,887 [main][MJParser.java:770] : Usage info on line 59: local variable "b" used. [ kind:1  name: b  type: 1]
+INFO  2017-02-11 06:20:15,887 [main][MJParser.java:588] : #48 0
+INFO  2017-02-11 06:20:15,887 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,887 [main][MJParser.java:588] : #49 b
+INFO  2017-02-11 06:20:15,887 [main][MJParser.java:588] : #20 --
+DEBUG 2017-02-11 06:20:15,887 [main][MJParser.java:770] : Usage info on line 59: local variable "b" used. [ kind:1  name: b  type: 1]
+INFO  2017-02-11 06:20:15,887 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:20:15,887 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:20:15,887 [main][MJParser.java:588] : #23 print
+INFO  2017-02-11 06:20:15,887 [main][MJParser.java:588] : #9 (
+INFO  2017-02-11 06:20:15,887 [main][MJParser.java:588] : #49 b
+INFO  2017-02-11 06:20:15,887 [main][MJParser.java:588] : #10 )
+DEBUG 2017-02-11 06:20:15,887 [main][MJParser.java:770] : Usage info on line 60: local variable "b" used. [ kind:1  name: b  type: 1]
+INFO  2017-02-11 06:20:15,887 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,887 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:20:15,887 [main][MJParser.java:588] : #38 if
+INFO  2017-02-11 06:20:15,888 [main][MJParser.java:588] : #9 (
+INFO  2017-02-11 06:20:15,888 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:20:15,888 [main][MJParser.java:588] : #42 ==
+DEBUG 2017-02-11 06:20:15,888 [main][MJParser.java:770] : Usage info on line 62: local variable "a" used. [ kind:1  name: a  type: 1]
+INFO  2017-02-11 06:20:15,888 [main][MJParser.java:588] : #48 2
+INFO  2017-02-11 06:20:15,888 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:20:15,888 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:20:15,888 [main][MJParser.java:588] : #26 break
+INFO  2017-02-11 06:20:15,888 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:20:15,888 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:20:15,888 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:20:15,888 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:20:15,888 [main][MJParser.java:588] : #8 }
+=====================SYMBOL TABLE DUMP=========================
+Type int: int, -1, -1 
+Type char: char, -1, -1 
+Con eol: char, 10, 0 
+Con null: Class [], 0, 0 
+Meth chr: char, 0, 1 
+   Var i: int, 0, 1 
+
+Meth ord: int, 0, 1 
+   Var ch: char, 0, 1 
+
+Meth len: int, 0, 1 
+   Var arr: Arr of notype, 0, 1 
+
+Type bool: , -1, -1 
+Prog test11: notype, 0, 1 
+   Con a: int, 3, 0 
+   Con b: int, 4, 0 
+   Var globalInt: int, 0, 0 
+   Type A: Class [Var c0mp@tib13_c11@s_A: notype, 0, 1 Fld l: int, 1, 1 Meth incrementL: notype, 2, 0 
+], 0, 0 
+   Type B: Class [Var c0mp@tib13_c11@s_B: notype, 0, 1 Var c0mp@tib13_c11@s_A: notype, 1, 1 Fld super.l: int, 1, 1 Meth super.incrementL: notype, 2, 1 
+Var st@t1c_m3th0d_someStaticMethod: notype, 3, 1 Meth someStaticMethod: notype, 17, 0 
+], 0, 0 
+   Meth main: notype, 36, 0 
+      Var aaa: Class [Var c0mp@tib13_c11@s_A: notype, 0, 1 Fld l: int, 1, 1 Meth incrementL: notype, 2, 0 
+], 0, 1 
+      Var bbb: Class [Var c0mp@tib13_c11@s_B: notype, 0, 1 Var c0mp@tib13_c11@s_A: notype, 1, 1 Fld super.l: int, 1, 1 Meth super.incrementL: notype, 2, 1 
+Var st@t1c_m3th0d_someStaticMethod: notype, 3, 1 Meth someStaticMethod: notype, 17, 0 
+], 1, 1 
+      Var a: int, 2, 1 
+      Var b: int, 3, 1 
+
+
+
+INFO  2017-02-11 06:20:15,895 [main][MJParser.java:633] : Parsing finished successfully!
+INFO  2017-02-11 06:20:15,895 [main][MJParser.java:636] : 
+===============================
+VARS COUNTING:
+INFO  2017-02-11 06:20:15,895 [main][MJParser.java:637] : Constants number: 2
+INFO  2017-02-11 06:20:15,895 [main][MJParser.java:638] : Global vars number: 1
+INFO  2017-02-11 06:20:15,895 [main][MJParser.java:639] : Global array vars number: 0
+INFO  2017-02-11 06:20:15,895 [main][MJParser.java:640] : Class vars number: 1
+INFO  2017-02-11 06:20:15,895 [main][MJParser.java:641] : Main function vars number: 4
+===============================
+
+INFO  2017-02-11 06:20:15,895 [main][MJParser.java:642] : 
+===============================
+FUNCTION CALLS COUNTING:
+INFO  2017-02-11 06:20:15,895 [main][MJParser.java:643] : Global functions: 1
+INFO  2017-02-11 06:20:15,895 [main][MJParser.java:644] : Class functions: 1
+INFO  2017-02-11 06:20:15,895 [main][MJParser.java:645] : Class static functions: 1
+INFO  2017-02-11 06:20:15,896 [main][MJParser.java:646] : Statements block number: 6
+INFO  2017-02-11 06:20:15,896 [main][MJParser.java:647] : Main method function calls number: 4
+INFO  2017-02-11 06:20:15,896 [main][MJParser.java:648] : Function formal parameters number: 0
+INFO  2017-02-11 06:20:15,896 [main][MJParser.java:649] : Class definitions number: 2

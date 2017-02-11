@@ -1,0 +1,23 @@
+ERROR 2017-02-11 06:19:40,004 [main][MJParser.java:778] : Semantic error on line 3: type mismatch.
+ERROR 2017-02-11 06:19:40,006 [main][MJParser.java:778] : Semantic error on line 4: type mismatch.
+ERROR 2017-02-11 06:19:40,010 [main][MJParser.java:778] : Semantic error on line 11: tried to use "this" outside of class. (a)
+ERROR 2017-02-11 06:19:40,010 [main][MJParser.java:778] : Syntax error "=" on line 11, column 13
+ERROR 2017-02-11 06:19:40,013 [main][MJParser.java:778] : Semantic error on line 19: tried to used non-existing identifier "mmm"
+ERROR 2017-02-11 06:19:40,013 [main][MJParser.java:778] : Semantic error on line 20: incompatible types.
+ERROR 2017-02-11 06:19:40,014 [main][MJParser.java:778] : Semantic error on line 21: incompatible types.
+ERROR 2017-02-11 06:19:40,015 [main][MJParser.java:778] : Semantic error on line 22: can't use right operator after left is used.
+Greska: Na levoj strani dodele mora biti promenljiva!
+ERROR 2017-02-11 06:19:40,015 [main][MJParser.java:778] : Semantic error on line 22: operation can be done only on array elements, variables or class fields.
+ERROR 2017-02-11 06:19:40,015 [main][MJParser.java:778] : Semantic error on line 22: operation can be done only with integers.
+ERROR 2017-02-11 06:19:40,016 [main][MJParser.java:625] : All error messages follow:
+				Semantic error on line 3: type mismatch.
+				Semantic error on line 4: type mismatch.
+				Semantic error on line 11: tried to use "this" outside of class. (a)
+				Syntax error "=" on line 11, column 13
+				Semantic error on line 19: tried to used non-existing identifier "mmm"
+				Semantic error on line 20: incompatible types.
+				Semantic error on line 21: incompatible types.
+				Semantic error on line 22: can't use right operator after left is used.
+				Semantic error on line 22: operation can be done only on array elements, variables or class fields.
+				Semantic error on line 22: operation can be done only with integers.
+ERROR 2017-02-11 06:19:40,016 [main][MJParser.java:626] : Parsing finished with ERRORS!

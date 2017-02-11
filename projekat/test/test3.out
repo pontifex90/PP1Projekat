@@ -1,0 +1,169 @@
+INFO  2017-02-11 06:18:39,850 [main][MJParser.java:615] : Compiling source file: D:\PP1ProjekatRepo\PP1Projekat\projekat\test\test3.mj
+INFO  2017-02-11 06:18:39,863 [main][MJParser.java:588] : #2 program
+INFO  2017-02-11 06:18:39,863 [main][MJParser.java:588] : #49 test3
+INFO  2017-02-11 06:18:39,863 [main][MJParser.java:588] : #7 {
+DEBUG 2017-02-11 06:18:39,865 [main][MJParser.java:770] : Semantic info on line 2: added program "test3" to symbol table. [ kind: 6  name: test3  type: 0]
+INFO  2017-02-11 06:18:39,866 [main][MJParser.java:588] : #17 void
+INFO  2017-02-11 06:18:39,866 [main][MJParser.java:588] : #49 method
+INFO  2017-02-11 06:18:39,866 [main][MJParser.java:588] : #9 (
+DEBUG 2017-02-11 06:18:39,867 [main][MJParser.java:770] : Semantic info on line 5: added  method "method" to symbol table. [ kind: 3  name: method  type: 0]
+INFO  2017-02-11 06:18:39,867 [main][MJParser.java:588] : #49 aas
+INFO  2017-02-11 06:18:39,867 [main][MJParser.java:588] : #49 assd
+INFO  2017-02-11 06:18:39,867 [main][MJParser.java:588] : #10 )
+DEBUG 2017-02-11 06:18:39,867 [main][MJParser.java:770] : Semantic info on line 5: added formal parameter variable "assd" to symbol table. [ kind: 1  name: assd  type: 0]
+INFO  2017-02-11 06:18:39,868 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:18:39,868 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:18:39,870 [main][MJParser.java:588] : #49 int
+INFO  2017-02-11 06:18:39,870 [main][MJParser.java:588] : #49 method2
+INFO  2017-02-11 06:18:39,870 [main][MJParser.java:588] : #9 (
+DEBUG 2017-02-11 06:18:39,870 [main][MJParser.java:770] : Semantic info on line 9: added  method "method2" to symbol table. [ kind: 3  name: method2  type: 1]
+INFO  2017-02-11 06:18:39,870 [main][MJParser.java:588] : #49 int
+INFO  2017-02-11 06:18:39,870 [main][MJParser.java:588] : #49 assd
+INFO  2017-02-11 06:18:39,870 [main][MJParser.java:588] : #49 asd
+INFO  2017-02-11 06:18:39,870 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:18:39,870 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:18:39,871 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:18:39,871 [main][MJParser.java:588] : #49 int
+DEBUG 2017-02-11 06:18:39,871 [main][MJParser.java:874] : Error recovery successful: Formal parameters declaration error (1)
+INFO  2017-02-11 06:18:39,872 [main][MJParser.java:588] : #49 method2
+INFO  2017-02-11 06:18:39,872 [main][MJParser.java:588] : #9 (
+INFO  2017-02-11 06:18:39,872 [main][MJParser.java:588] : #49 int
+INFO  2017-02-11 06:18:39,872 [main][MJParser.java:588] : #28 +
+INFO  2017-02-11 06:18:39,872 [main][MJParser.java:588] : #28 +
+INFO  2017-02-11 06:18:39,872 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:18:39,872 [main][MJParser.java:588] : #28 +
+INFO  2017-02-11 06:18:39,872 [main][MJParser.java:588] : #49 asd
+INFO  2017-02-11 06:18:39,872 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:18:39,872 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:18:39,872 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:18:39,873 [main][MJParser.java:588] : #17 void
+DEBUG 2017-02-11 06:18:39,873 [main][MJParser.java:874] : Error recovery successful: Formal parameters declaration error (1)
+INFO  2017-02-11 06:18:39,873 [main][MJParser.java:588] : #49 main
+INFO  2017-02-11 06:18:39,873 [main][MJParser.java:588] : #9 (
+DEBUG 2017-02-11 06:18:39,873 [main][MJParser.java:770] : Semantic info on line 15: added  method "main" to symbol table. [ kind: 3  name: main  type: 0]
+INFO  2017-02-11 06:18:39,873 [main][MJParser.java:588] : #49 int
+INFO  2017-02-11 06:18:39,873 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:18:39,873 [main][MJParser.java:588] : #13 [
+INFO  2017-02-11 06:18:39,873 [main][MJParser.java:588] : #14 ]
+INFO  2017-02-11 06:18:39,873 [main][MJParser.java:588] : #10 )
+DEBUG 2017-02-11 06:18:39,873 [main][MJParser.java:770] : Semantic info on line 15: added formal parameter array variable "a" to symbol table. [ kind: 1  name: a  type: 3]
+INFO  2017-02-11 06:18:39,873 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:18:39,874 [main][MJParser.java:588] : #38 if
+INFO  2017-02-11 06:18:39,874 [main][MJParser.java:588] : #9 (
+INFO  2017-02-11 06:18:39,874 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:18:39,874 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:18:39,874 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:18:39,874 [main][MJParser.java:588] : #49 A
+INFO  2017-02-11 06:18:39,874 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:18:39,874 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:18:39,874 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:18:39,874 [main][MJParser.java:588] : #38 if
+DEBUG 2017-02-11 06:18:39,875 [main][MJParser.java:874] : Error recovery successful: If statement condition error (1)
+INFO  2017-02-11 06:18:39,875 [main][MJParser.java:588] : #9 (
+INFO  2017-02-11 06:18:39,875 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:18:39,875 [main][MJParser.java:588] : #19 ++
+DEBUG 2017-02-11 06:18:39,875 [main][MJParser.java:770] : Usage info on line 20: formal parameter variable "a" used. [ kind:1  name: a  type: 3]
+INFO  2017-02-11 06:18:39,875 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:18:39,875 [main][MJParser.java:588] : #49 A
+INFO  2017-02-11 06:18:39,875 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:18:39,875 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:18:39,875 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:18:39,875 [main][MJParser.java:588] : #38 if
+DEBUG 2017-02-11 06:18:39,875 [main][MJParser.java:874] : Error recovery successful: If statement condition error (1)
+INFO  2017-02-11 06:18:39,876 [main][MJParser.java:588] : #9 (
+INFO  2017-02-11 06:18:39,876 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:18:39,876 [main][MJParser.java:588] : #44 >
+DEBUG 2017-02-11 06:18:39,876 [main][MJParser.java:770] : Usage info on line 23: formal parameter variable "a" used. [ kind:1  name: a  type: 3]
+INFO  2017-02-11 06:18:39,876 [main][MJParser.java:588] : #44 >
+INFO  2017-02-11 06:18:39,876 [main][MJParser.java:588] : #44 >
+INFO  2017-02-11 06:18:39,876 [main][MJParser.java:588] : #44 >
+INFO  2017-02-11 06:18:39,876 [main][MJParser.java:588] : #49 A
+INFO  2017-02-11 06:18:39,876 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:18:39,876 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:18:39,876 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:18:39,876 [main][MJParser.java:588] : #22 for
+DEBUG 2017-02-11 06:18:39,876 [main][MJParser.java:874] : Error recovery successful: If statement condition error (1)
+INFO  2017-02-11 06:18:39,876 [main][MJParser.java:588] : #9 (
+INFO  2017-02-11 06:18:39,877 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:18:39,877 [main][MJParser.java:588] : #46 <
+DEBUG 2017-02-11 06:18:39,877 [main][MJParser.java:770] : Usage info on line 26: formal parameter variable "a" used. [ kind:1  name: a  type: 3]
+INFO  2017-02-11 06:18:39,877 [main][MJParser.java:588] : #49 d
+INFO  2017-02-11 06:18:39,877 [main][MJParser.java:588] : #49 s
+INFO  2017-02-11 06:18:39,877 [main][MJParser.java:588] : #12 ,
+INFO  2017-02-11 06:18:39,877 [main][MJParser.java:588] : #49 d
+INFO  2017-02-11 06:18:39,877 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:18:39,877 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:18:39,877 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:18:39,877 [main][MJParser.java:588] : #7 {
+DEBUG 2017-02-11 06:18:39,878 [main][MJParser.java:874] : Error recovery successful: For loop condition error (1)
+INFO  2017-02-11 06:18:39,878 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:18:39,878 [main][MJParser.java:588] : #22 for
+INFO  2017-02-11 06:18:39,878 [main][MJParser.java:588] : #9 (
+INFO  2017-02-11 06:18:39,878 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:18:39,878 [main][MJParser.java:588] : #11 ;
+DEBUG 2017-02-11 06:18:39,878 [main][MJParser.java:770] : Usage info on line 30: formal parameter variable "a" used. [ kind:1  name: a  type: 3]
+INFO  2017-02-11 06:18:39,878 [main][MJParser.java:588] : #49 da
+INFO  2017-02-11 06:18:39,878 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:18:39,879 [main][MJParser.java:588] : #49 ad
+DEBUG 2017-02-11 06:18:39,879 [main][MJParser.java:874] : Error recovery successful: For loop condition error (1)
+INFO  2017-02-11 06:18:39,879 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:18:39,879 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:18:39,879 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:18:39,880 [main][MJParser.java:588] : #49 a
+DEBUG 2017-02-11 06:18:39,880 [main][MJParser.java:874] : Error recovery successful: For loop condition error (1)
+INFO  2017-02-11 06:18:39,880 [main][MJParser.java:588] : #13 [
+DEBUG 2017-02-11 06:18:39,880 [main][MJParser.java:770] : Usage info on line 34: formal parameter variable "a" used. [ kind:1  name: a  type: 3]
+INFO  2017-02-11 06:18:39,880 [main][MJParser.java:588] : #48 23
+INFO  2017-02-11 06:18:39,880 [main][MJParser.java:588] : #48 23
+INFO  2017-02-11 06:18:39,880 [main][MJParser.java:588] : #14 ]
+INFO  2017-02-11 06:18:39,880 [main][MJParser.java:588] : #19 ++
+INFO  2017-02-11 06:18:39,880 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:18:39,880 [main][MJParser.java:588] : #8 }
+DEBUG 2017-02-11 06:18:39,880 [main][MJParser.java:874] : Error recovery successful: Indexing array error (1)
+INFO  2017-02-11 06:18:39,880 [main][MJParser.java:588] : #8 }
+=====================SYMBOL TABLE DUMP=========================
+Type int: int, -1, -1 
+Type char: char, -1, -1 
+Con eol: char, 10, 0 
+Con null: Class [], 0, 0 
+Meth chr: char, 0, 1 
+   Var i: int, 0, 1 
+
+Meth ord: int, 0, 1 
+   Var ch: char, 0, 1 
+
+Meth len: int, 0, 1 
+   Var arr: Arr of notype, 0, 1 
+
+Type bool: , -1, -1 
+Prog test3: notype, 0, 1 
+   Meth method: notype, 0, 1 
+      Var assd: notype, 0, 1 
+
+   Meth method2: int, 5, 0 
+
+   Meth main: notype, 15, 1 
+      Var a: Arr of int, 0, 1 
+
+
+
+INFO  2017-02-11 06:18:39,881 [main][MJParser.java:636] : 
+===============================
+VARS COUNTING:
+INFO  2017-02-11 06:18:39,881 [main][MJParser.java:637] : Constants number: 0
+INFO  2017-02-11 06:18:39,881 [main][MJParser.java:638] : Global vars number: 0
+INFO  2017-02-11 06:18:39,881 [main][MJParser.java:639] : Global array vars number: 0
+INFO  2017-02-11 06:18:39,881 [main][MJParser.java:640] : Class vars number: 0
+INFO  2017-02-11 06:18:39,881 [main][MJParser.java:641] : Main function vars number: 0
+===============================
+
+INFO  2017-02-11 06:18:39,882 [main][MJParser.java:642] : 
+===============================
+FUNCTION CALLS COUNTING:
+INFO  2017-02-11 06:18:39,882 [main][MJParser.java:643] : Global functions: 4
+INFO  2017-02-11 06:18:39,882 [main][MJParser.java:644] : Class functions: 0
+INFO  2017-02-11 06:18:39,882 [main][MJParser.java:645] : Class static functions: 0
+INFO  2017-02-11 06:18:39,882 [main][MJParser.java:646] : Statements block number: 5
+INFO  2017-02-11 06:18:39,882 [main][MJParser.java:647] : Main method function calls number: 0
+INFO  2017-02-11 06:18:39,882 [main][MJParser.java:648] : Function formal parameters number: 2
+INFO  2017-02-11 06:18:39,882 [main][MJParser.java:649] : Class definitions number: 0

@@ -1,0 +1,43 @@
+ERROR 2017-02-11 06:19:51,985 [main][MJParser.java:778] : Semantic error on line 6: non-void method must return a type.
+ERROR 2017-02-11 06:19:51,986 [main][MJParser.java:778] : Semantic error on line 10: void methods shouldn't return a type.
+ERROR 2017-02-11 06:19:51,988 [main][MJParser.java:778] : Semantic error on line 18: cannot assign to constant, method, class name or program name.
+Greska: Na levoj strani dodele mora biti promenljiva!
+ERROR 2017-02-11 06:19:51,989 [main][MJParser.java:778] : Semantic error on line 19: invalid number of parameters for method "someMethod2".
+ERROR 2017-02-11 06:19:51,990 [main][MJParser.java:778] : Semantic error on line 20: invalid number of parameters for method "someMethod".
+ERROR 2017-02-11 06:19:51,991 [main][MJParser.java:778] : Semantic error on line 21: incompatible types.
+ERROR 2017-02-11 06:19:51,991 [main][MJParser.java:778] : Semantic error on line 21: formal ("b") and actual parameter types mismatch.
+ERROR 2017-02-11 06:19:51,992 [main][MJParser.java:778] : Semantic error on line 22: incompatible types.
+ERROR 2017-02-11 06:19:51,992 [main][MJParser.java:778] : Semantic error on line 23: wrong indexing expression type. It must be "int"
+ERROR 2017-02-11 06:19:51,993 [main][MJParser.java:778] : Semantic error on line 24: operation can be done only with integers.
+ERROR 2017-02-11 06:19:51,994 [main][MJParser.java:778] : Semantic error on line 26: incompatible types.
+ERROR 2017-02-11 06:19:51,997 [main][MJParser.java:778] : Semantic error on line 29: expression in condition must be of boolean type.
+ERROR 2017-02-11 06:19:51,997 [main][MJParser.java:778] : Semantic error on line 30: break/continue can be used only inside the for loop.
+ERROR 2017-02-11 06:19:51,997 [main][MJParser.java:778] : Semantic error on line 31: break/continue can be used only inside the for loop.
+ERROR 2017-02-11 06:19:51,998 [main][MJParser.java:778] : Semantic error on line 33: booleans, classes and arrays can only use "==" and "!=" relative operators.
+ERROR 2017-02-11 06:19:51,998 [main][MJParser.java:778] : Semantic error on line 33: tried to compare incompatible types.
+ERROR 2017-02-11 06:19:51,999 [main][MJParser.java:778] : Semantic error on line 36: booleans, classes and arrays can only use "==" and "!=" relative operators.
+ERROR 2017-02-11 06:19:51,999 [main][MJParser.java:778] : Semantic error on line 36: tried to compare incompatible types.
+ERROR 2017-02-11 06:19:51,999 [main][MJParser.java:778] : Semantic error on line 36: booleans, classes and arrays can only use "==" and "!=" relative operators.
+ERROR 2017-02-11 06:19:51,999 [main][MJParser.java:778] : Semantic error on line 36: tried to compare incompatible types.
+ERROR 2017-02-11 06:19:52,000 [main][MJParser.java:625] : All error messages follow:
+				Semantic error on line 6: non-void method must return a type.
+				Semantic error on line 10: void methods shouldn't return a type.
+				Semantic error on line 18: cannot assign to constant, method, class name or program name.
+				Semantic error on line 19: invalid number of parameters for method "someMethod2".
+				Semantic error on line 20: invalid number of parameters for method "someMethod".
+				Semantic error on line 21: incompatible types.
+				Semantic error on line 21: formal ("b") and actual parameter types mismatch.
+				Semantic error on line 22: incompatible types.
+				Semantic error on line 23: wrong indexing expression type. It must be "int"
+				Semantic error on line 24: operation can be done only with integers.
+				Semantic error on line 26: incompatible types.
+				Semantic error on line 29: expression in condition must be of boolean type.
+				Semantic error on line 30: break/continue can be used only inside the for loop.
+				Semantic error on line 31: break/continue can be used only inside the for loop.
+				Semantic error on line 33: booleans, classes and arrays can only use "==" and "!=" relative operators.
+				Semantic error on line 33: tried to compare incompatible types.
+				Semantic error on line 36: booleans, classes and arrays can only use "==" and "!=" relative operators.
+				Semantic error on line 36: tried to compare incompatible types.
+				Semantic error on line 36: booleans, classes and arrays can only use "==" and "!=" relative operators.
+				Semantic error on line 36: tried to compare incompatible types.
+ERROR 2017-02-11 06:19:52,000 [main][MJParser.java:626] : Parsing finished with ERRORS!

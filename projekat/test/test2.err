@@ -1,0 +1,8 @@
+ERROR 2017-02-11 06:18:03,733 [main][MJParser.java:778] : Syntax error "sd" on line 6, column 6
+ERROR 2017-02-11 06:18:03,736 [main][MJParser.java:778] : Syntax error "da" on line 10, column 8
+ERROR 2017-02-11 06:18:03,738 [main][MJParser.java:778] : Syntax error "44" on line 12, column 9
+ERROR 2017-02-11 06:18:03,739 [main][MJParser.java:625] : All error messages follow:
+				Syntax error "sd" on line 6, column 6
+				Syntax error "da" on line 10, column 8
+				Syntax error "44" on line 12, column 9
+ERROR 2017-02-11 06:18:03,739 [main][MJParser.java:626] : Parsing finished with ERRORS!

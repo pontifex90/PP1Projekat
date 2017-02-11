@@ -1,0 +1,36 @@
+ERROR 2017-02-11 06:18:39,867 [main][MJParser.java:778] : Semantic error on line 5: type "aas" not found in symbol table.
+ERROR 2017-02-11 06:18:39,870 [main][MJParser.java:778] : Syntax error "asd" on line 9, column 22
+ERROR 2017-02-11 06:18:39,871 [main][MJParser.java:778] : Semantic error on line 11: non-void method must have return.
+ERROR 2017-02-11 06:18:39,872 [main][MJParser.java:778] : Semantic error on line 12: identifier with name "method2" already exists.
+ERROR 2017-02-11 06:18:39,872 [main][MJParser.java:778] : Syntax error "+" on line 12, column 17
+ERROR 2017-02-11 06:18:39,873 [main][MJParser.java:778] : Semantic error on line 14: non-void method must have return.
+ERROR 2017-02-11 06:18:39,874 [main][MJParser.java:778] : Syntax error "a" on line 17, column 7
+ERROR 2017-02-11 06:18:39,875 [main][MJParser.java:778] : Syntax error "++" on line 20, column 7
+ERROR 2017-02-11 06:18:39,876 [main][MJParser.java:778] : Syntax error ">" on line 23, column 8
+ERROR 2017-02-11 06:18:39,877 [main][MJParser.java:778] : Syntax error "<" on line 26, column 9
+ERROR 2017-02-11 06:18:39,878 [main][MJParser.java:778] : Syntax error ";" on line 30, column 9
+ERROR 2017-02-11 06:18:39,879 [main][MJParser.java:778] : Semantic error on line 30: tried to used non-existing identifier "da"
+ERROR 2017-02-11 06:18:39,879 [main][MJParser.java:778] : Semantic error on line 30: expression in condition must be of boolean type.
+ERROR 2017-02-11 06:18:39,879 [main][MJParser.java:778] : Semantic error on line 30: tried to used non-existing identifier "ad"
+ERROR 2017-02-11 06:18:39,879 [main][MJParser.java:778] : Syntax error ")" on line 30, column 18
+ERROR 2017-02-11 06:18:39,880 [main][MJParser.java:778] : Syntax error "23" on line 34, column 8
+ERROR 2017-02-11 06:18:39,880 [main][MJParser.java:778] : Semantic error on line 34: operation can be done only with integers.
+ERROR 2017-02-11 06:18:39,881 [main][MJParser.java:625] : All error messages follow:
+				Semantic error on line 5: type "aas" not found in symbol table.
+				Syntax error "asd" on line 9, column 22
+				Semantic error on line 11: non-void method must have return.
+				Semantic error on line 12: identifier with name "method2" already exists.
+				Syntax error "+" on line 12, column 17
+				Semantic error on line 14: non-void method must have return.
+				Syntax error "a" on line 17, column 7
+				Syntax error "++" on line 20, column 7
+				Syntax error ">" on line 23, column 8
+				Syntax error "<" on line 26, column 9
+				Syntax error ";" on line 30, column 9
+				Semantic error on line 30: tried to used non-existing identifier "da"
+				Semantic error on line 30: expression in condition must be of boolean type.
+				Semantic error on line 30: tried to used non-existing identifier "ad"
+				Syntax error ")" on line 30, column 18
+				Syntax error "23" on line 34, column 8
+				Semantic error on line 34: operation can be done only with integers.
+ERROR 2017-02-11 06:18:39,881 [main][MJParser.java:626] : Parsing finished with ERRORS!

@@ -1,0 +1,156 @@
+INFO  2017-02-11 06:19:39,986 [main][MJParser.java:615] : Compiling source file: D:\PP1ProjekatRepo\PP1Projekat\projekat\test\test8.mj
+INFO  2017-02-11 06:19:39,999 [main][MJParser.java:588] : #2 program
+INFO  2017-02-11 06:19:39,999 [main][MJParser.java:588] : #49 test8
+INFO  2017-02-11 06:19:39,999 [main][MJParser.java:588] : #5 const
+DEBUG 2017-02-11 06:19:40,000 [main][MJParser.java:770] : Semantic info on line 2: added program "test8" to symbol table. [ kind: 6  name: test8  type: 0]
+INFO  2017-02-11 06:19:40,002 [main][MJParser.java:588] : #49 int
+INFO  2017-02-11 06:19:40,002 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:19:40,002 [main][MJParser.java:588] : #6 =
+INFO  2017-02-11 06:19:40,003 [main][MJParser.java:588] : #51 true
+INFO  2017-02-11 06:19:40,003 [main][MJParser.java:588] : #12 ,
+INFO  2017-02-11 06:19:40,004 [main][MJParser.java:588] : #49 b
+INFO  2017-02-11 06:19:40,004 [main][MJParser.java:588] : #6 =
+INFO  2017-02-11 06:19:40,004 [main][MJParser.java:588] : #48 4
+INFO  2017-02-11 06:19:40,004 [main][MJParser.java:588] : #11 ;
+DEBUG 2017-02-11 06:19:40,004 [main][MJParser.java:770] : Semantic info on line 3: added constant "b" to symbol table. [ kind: 0  name: b  type: 1]
+INFO  2017-02-11 06:19:40,006 [main][MJParser.java:588] : #5 const
+INFO  2017-02-11 06:19:40,006 [main][MJParser.java:588] : #49 char
+INFO  2017-02-11 06:19:40,006 [main][MJParser.java:588] : #49 x
+INFO  2017-02-11 06:19:40,006 [main][MJParser.java:588] : #6 =
+INFO  2017-02-11 06:19:40,006 [main][MJParser.java:588] : #48 34
+INFO  2017-02-11 06:19:40,006 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:19:40,006 [main][MJParser.java:588] : #49 int
+INFO  2017-02-11 06:19:40,006 [main][MJParser.java:588] : #49 aa
+INFO  2017-02-11 06:19:40,006 [main][MJParser.java:588] : #12 ,
+DEBUG 2017-02-11 06:19:40,006 [main][MJParser.java:770] : Semantic info on line 6: added global variable "aa" to symbol table. [ kind: 1  name: aa  type: 1]
+INFO  2017-02-11 06:19:40,007 [main][MJParser.java:588] : #49 bb
+INFO  2017-02-11 06:19:40,007 [main][MJParser.java:588] : #12 ,
+DEBUG 2017-02-11 06:19:40,007 [main][MJParser.java:770] : Semantic info on line 6: added global variable "bb" to symbol table. [ kind: 1  name: bb  type: 1]
+INFO  2017-02-11 06:19:40,007 [main][MJParser.java:588] : #49 cc
+INFO  2017-02-11 06:19:40,007 [main][MJParser.java:588] : #11 ;
+DEBUG 2017-02-11 06:19:40,007 [main][MJParser.java:770] : Semantic info on line 6: added global variable "cc" to symbol table. [ kind: 1  name: cc  type: 1]
+INFO  2017-02-11 06:19:40,007 [main][MJParser.java:588] : #49 bool
+INFO  2017-02-11 06:19:40,007 [main][MJParser.java:588] : #49 d
+INFO  2017-02-11 06:19:40,007 [main][MJParser.java:588] : #11 ;
+DEBUG 2017-02-11 06:19:40,008 [main][MJParser.java:770] : Semantic info on line 7: added global variable "d" to symbol table. [ kind: 1  name: d  type: 5]
+INFO  2017-02-11 06:19:40,008 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:19:40,008 [main][MJParser.java:588] : #17 void
+INFO  2017-02-11 06:19:40,008 [main][MJParser.java:588] : #49 method
+INFO  2017-02-11 06:19:40,008 [main][MJParser.java:588] : #9 (
+DEBUG 2017-02-11 06:19:40,009 [main][MJParser.java:770] : Semantic info on line 10: added  method "method" to symbol table. [ kind: 3  name: method  type: 0]
+INFO  2017-02-11 06:19:40,009 [main][MJParser.java:588] : #49 int
+INFO  2017-02-11 06:19:40,009 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:19:40,009 [main][MJParser.java:588] : #10 )
+DEBUG 2017-02-11 06:19:40,009 [main][MJParser.java:770] : Semantic info on line 10: added formal parameter variable "a" to symbol table. [ kind: 1  name: a  type: 1]
+INFO  2017-02-11 06:19:40,009 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:19:40,009 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:19:40,009 [main][MJParser.java:588] : #6 =
+DEBUG 2017-02-11 06:19:40,009 [main][MJParser.java:770] : Usage info on line 11: formal parameter variable "a" used. [ kind:1  name: a  type: 1]
+INFO  2017-02-11 06:19:40,010 [main][MJParser.java:588] : #4 this
+INFO  2017-02-11 06:19:40,010 [main][MJParser.java:588] : #18 .
+INFO  2017-02-11 06:19:40,010 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:19:40,010 [main][MJParser.java:588] : #6 =
+INFO  2017-02-11 06:19:40,010 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:19:40,010 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:19:40,010 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:19:40,011 [main][MJParser.java:588] : #17 void
+INFO  2017-02-11 06:19:40,011 [main][MJParser.java:588] : #49 main
+DEBUG 2017-02-11 06:19:40,011 [main][MJParser.java:874] : Error recovery successful: Assign operator error (1)
+INFO  2017-02-11 06:19:40,011 [main][MJParser.java:588] : #9 (
+DEBUG 2017-02-11 06:19:40,011 [main][MJParser.java:770] : Semantic info on line 14: added  method "main" to symbol table. [ kind: 3  name: main  type: 0]
+INFO  2017-02-11 06:19:40,011 [main][MJParser.java:588] : #10 )
+INFO  2017-02-11 06:19:40,011 [main][MJParser.java:588] : #49 int
+INFO  2017-02-11 06:19:40,011 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:19:40,012 [main][MJParser.java:588] : #13 [
+INFO  2017-02-11 06:19:40,012 [main][MJParser.java:588] : #14 ]
+INFO  2017-02-11 06:19:40,012 [main][MJParser.java:588] : #11 ;
+DEBUG 2017-02-11 06:19:40,012 [main][MJParser.java:770] : Semantic info on line 15: added local array variable "a" to symbol table. [ kind: 1  name: a  type: 3]
+INFO  2017-02-11 06:19:40,012 [main][MJParser.java:588] : #49 int
+INFO  2017-02-11 06:19:40,012 [main][MJParser.java:588] : #49 b
+INFO  2017-02-11 06:19:40,012 [main][MJParser.java:588] : #11 ;
+DEBUG 2017-02-11 06:19:40,012 [main][MJParser.java:770] : Semantic info on line 16: added local variable "b" to symbol table. [ kind: 1  name: b  type: 1]
+INFO  2017-02-11 06:19:40,012 [main][MJParser.java:588] : #49 bool
+INFO  2017-02-11 06:19:40,012 [main][MJParser.java:588] : #49 f
+INFO  2017-02-11 06:19:40,012 [main][MJParser.java:588] : #11 ;
+DEBUG 2017-02-11 06:19:40,012 [main][MJParser.java:770] : Semantic info on line 17: added local variable "f" to symbol table. [ kind: 1  name: f  type: 5]
+INFO  2017-02-11 06:19:40,012 [main][MJParser.java:588] : #7 {
+INFO  2017-02-11 06:19:40,012 [main][MJParser.java:588] : #49 mmm
+INFO  2017-02-11 06:19:40,013 [main][MJParser.java:588] : #6 =
+INFO  2017-02-11 06:19:40,013 [main][MJParser.java:588] : #48 4
+INFO  2017-02-11 06:19:40,013 [main][MJParser.java:588] : #11 ;
+INFO  2017-02-11 06:19:40,013 [main][MJParser.java:588] : #49 aa
+INFO  2017-02-11 06:19:40,013 [main][MJParser.java:588] : #6 =
+DEBUG 2017-02-11 06:19:40,013 [main][MJParser.java:770] : Usage info on line 20: global variable "aa" used. [ kind:1  name: aa  type: 1]
+INFO  2017-02-11 06:19:40,013 [main][MJParser.java:588] : #49 d
+INFO  2017-02-11 06:19:40,013 [main][MJParser.java:588] : #11 ;
+DEBUG 2017-02-11 06:19:40,013 [main][MJParser.java:770] : Usage info on line 20: global variable "d" used. [ kind:1  name: d  type: 5]
+INFO  2017-02-11 06:19:40,013 [main][MJParser.java:588] : #49 b
+INFO  2017-02-11 06:19:40,014 [main][MJParser.java:588] : #6 =
+DEBUG 2017-02-11 06:19:40,014 [main][MJParser.java:770] : Usage info on line 21: local variable "b" used. [ kind:1  name: b  type: 1]
+INFO  2017-02-11 06:19:40,014 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:19:40,014 [main][MJParser.java:588] : #11 ;
+DEBUG 2017-02-11 06:19:40,014 [main][MJParser.java:770] : Usage info on line 21: local variable "a" used. [ kind:1  name: a  type: 3]
+INFO  2017-02-11 06:19:40,014 [main][MJParser.java:588] : #49 b
+INFO  2017-02-11 06:19:40,014 [main][MJParser.java:588] : #30 +=
+DEBUG 2017-02-11 06:19:40,014 [main][MJParser.java:770] : Usage info on line 22: local variable "b" used. [ kind:1  name: b  type: 1]
+INFO  2017-02-11 06:19:40,014 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:19:40,015 [main][MJParser.java:588] : #28 +
+DEBUG 2017-02-11 06:19:40,015 [main][MJParser.java:770] : Usage info on line 22: local variable "a" used. [ kind:1  name: a  type: 3]
+INFO  2017-02-11 06:19:40,015 [main][MJParser.java:588] : #48 3
+INFO  2017-02-11 06:19:40,015 [main][MJParser.java:588] : #30 +=
+INFO  2017-02-11 06:19:40,015 [main][MJParser.java:588] : #49 a
+INFO  2017-02-11 06:19:40,015 [main][MJParser.java:588] : #11 ;
+DEBUG 2017-02-11 06:19:40,015 [main][MJParser.java:770] : Usage info on line 22: local variable "a" used. [ kind:1  name: a  type: 3]
+INFO  2017-02-11 06:19:40,015 [main][MJParser.java:588] : #8 }
+INFO  2017-02-11 06:19:40,016 [main][MJParser.java:588] : #8 }
+=====================SYMBOL TABLE DUMP=========================
+Type int: int, -1, -1 
+Type char: char, -1, -1 
+Con eol: char, 10, 0 
+Con null: Class [], 0, 0 
+Meth chr: char, 0, 1 
+   Var i: int, 0, 1 
+
+Meth ord: int, 0, 1 
+   Var ch: char, 0, 1 
+
+Meth len: int, 0, 1 
+   Var arr: Arr of notype, 0, 1 
+
+Type bool: , -1, -1 
+Prog test8: notype, 0, 1 
+   Con b: int, 4, 0 
+   Var aa: int, 0, 0 
+   Var bb: int, 1, 0 
+   Var cc: int, 2, 0 
+   Var d: , 3, 0 
+   Meth method: notype, 7, 1 
+      Var a: int, 0, 1 
+
+   Meth main: notype, 14, 0 
+      Var a: Arr of int, 0, 1 
+      Var b: int, 1, 1 
+      Var f: , 2, 1 
+
+
+
+INFO  2017-02-11 06:19:40,016 [main][MJParser.java:636] : 
+===============================
+VARS COUNTING:
+INFO  2017-02-11 06:19:40,016 [main][MJParser.java:637] : Constants number: 3
+INFO  2017-02-11 06:19:40,016 [main][MJParser.java:638] : Global vars number: 4
+INFO  2017-02-11 06:19:40,016 [main][MJParser.java:639] : Global array vars number: 0
+INFO  2017-02-11 06:19:40,016 [main][MJParser.java:640] : Class vars number: 0
+INFO  2017-02-11 06:19:40,017 [main][MJParser.java:641] : Main function vars number: 3
+===============================
+
+INFO  2017-02-11 06:19:40,017 [main][MJParser.java:642] : 
+===============================
+FUNCTION CALLS COUNTING:
+INFO  2017-02-11 06:19:40,017 [main][MJParser.java:643] : Global functions: 2
+INFO  2017-02-11 06:19:40,017 [main][MJParser.java:644] : Class functions: 0
+INFO  2017-02-11 06:19:40,017 [main][MJParser.java:645] : Class static functions: 0
+INFO  2017-02-11 06:19:40,017 [main][MJParser.java:646] : Statements block number: 0
+INFO  2017-02-11 06:19:40,017 [main][MJParser.java:647] : Main method function calls number: 0
+INFO  2017-02-11 06:19:40,017 [main][MJParser.java:648] : Function formal parameters number: 1
+INFO  2017-02-11 06:19:40,017 [main][MJParser.java:649] : Class definitions number: 0

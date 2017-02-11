@@ -1,0 +1,14 @@
+ERROR 2017-02-11 06:18:55,390 [main][MJParser.java:778] : Syntax error "=" on line 5, column 14
+ERROR 2017-02-11 06:18:55,395 [main][MJParser.java:778] : Semantic error on line 9: non-void method must have return.
+ERROR 2017-02-11 06:18:55,395 [main][MJParser.java:778] : Syntax error "aa" on line 13, column 18
+ERROR 2017-02-11 06:18:55,397 [main][MJParser.java:778] : Semantic error on line 19: identifier with name "a" already exists.
+ERROR 2017-02-11 06:18:55,397 [main][MJParser.java:778] : Semantic error on line 21: tried to use a primitive type as a class object "a"
+ERROR 2017-02-11 06:18:55,398 [main][MJParser.java:778] : Syntax error "+" on line 21, column 19
+ERROR 2017-02-11 06:18:55,399 [main][MJParser.java:625] : All error messages follow:
+				Syntax error "=" on line 5, column 14
+				Semantic error on line 9: non-void method must have return.
+				Syntax error "aa" on line 13, column 18
+				Semantic error on line 19: identifier with name "a" already exists.
+				Semantic error on line 21: tried to use a primitive type as a class object "a"
+				Syntax error "+" on line 21, column 19
+ERROR 2017-02-11 06:18:55,399 [main][MJParser.java:626] : Parsing finished with ERRORS!
