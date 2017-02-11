@@ -1,0 +1,45 @@
+program test1
+
+const int a = 3, b = 4;
+const char d = 'd';
+
+int globalInt;
+bool globalBool;
+
+{
+	int increment(int a) {
+		a += 1;
+		return a;
+	}
+
+	int sum(int a, int b) {
+		
+	}
+	
+	bool isBiggerThan(int a, int z) {
+		return a > z;
+	}
+	
+	void printFinish() {
+		print('D');
+		print('o');
+		print('n');
+		print('e');
+	}
+	
+	void main() {
+		globalInt += b;
+		
+		print(globalInt);
+		
+		globalInt = increment(a);
+				
+		print(globalInt);
+		
+		globalBool = isBiggerThan(globalInt, a);
+		
+		print(globalBool);
+		
+		printFinish();
+	}
+}

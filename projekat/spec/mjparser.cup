@@ -62,21 +62,21 @@ parser code {:
 	        	log.info("Parsing finished successfully!");
 	        }
 	        
-//	        log.info("\n===============================\nVARS COUNTING:");
-//	        log.info("Constants number: " + p.constantsCount);
-//	        log.info("Global vars number: " + p.globalVarsCount);
-//	        log.info("Global array vars number: " + p.globalArrayVarsCount);
-//	        log.info("Class vars number: " + p.classGlobalVarsCount);
-//	        log.info("Main function vars number: " + p.mainFunctionVarsCount + "\n===============================\n");
-//	        log.info("\n===============================\nFUNCTION CALLS COUNTING:");
-//	        log.info("Global function calls: " + p.globalFuncCount);
-//	        log.info("Global static function calls: " + p.globalStaticFuncCount);
-//	        log.info("Class function calls: " + p.classFuncCount);
-//	        log.info("Class static function calls: " + p.classStaticFuncCount);
-//	        log.info("Statements block number: " + p.statementsBlockCount);
-//	        log.info("Main method function calls number: " + p.mainMethodFunctionCallsCount);
-//	        log.info("Function formal parameters number: " + p.functionFormParsCount);
-//	        log.info("Class definitions number: " + p.classDefinitionCount);
+	        log.info("\n===============================\nVARS COUNTING:");
+	        log.info("Constants number: " + p.constantsCount);
+	        log.info("Global vars number: " + p.globalVarsCount);
+	        log.info("Global array vars number: " + p.globalArrayVarsCount);
+	        log.info("Class vars number: " + p.classGlobalVarsCount);
+	        log.info("Main function vars number: " + p.mainFunctionVarsCount + "\n===============================\n");
+	        log.info("\n===============================\nFUNCTION CALLS COUNTING:");
+	        log.info("Global function calls: " + p.globalFuncCount);
+	        log.info("Global static function calls: " + p.globalStaticFuncCount);
+	        log.info("Class function calls: " + p.classFuncCount);
+	        log.info("Class static function calls: " + p.classStaticFuncCount);
+	        log.info("Statements block number: " + p.statementsBlockCount);
+	        log.info("Main method function calls number: " + p.mainMethodFunctionCallsCount);
+	        log.info("Function formal parameters number: " + p.functionFormParsCount);
+	        log.info("Class definitions number: " + p.classDefinitionCount);
 	        
 		} 
 		finally {
@@ -417,6 +417,8 @@ action code {:
 	}
 	
 	private boolean hasMethodAppropriateParams(Obj methodObject, Stack<Struct> actualParams, int line) {
+		if(methodObject == null || actualParams == null) { return false; }
+	
 		// Check number of parameters.
 		if(methodObject.getLevel() != actualParams.size()) {
 			parser.semantic_error("invalid number of parameters for method \"" + methodObject.getName() + "\".", line);
@@ -1348,7 +1350,9 @@ MethodsList ::= MethodsList MethodDecl
 MethodDecl ::= {: parser.isMethodContext = true; // Starting method context :}
 				StaticDeclarator VoidType MethodName:met OpenScope L_PAREN FormPars:numOfPars R_PAREN 
 				{: 
-					met.setLevel(numOfPars);
+					if(numOfPars != null) {
+						met.setLevel(numOfPars);
+					}
 					Tab.chainLocalSymbols(met); // Hack to enable recursion and to enable distinguish formal parameter from local var. 
 					numberOfFormalParameters = Tab.currentScope().getnVars();
 				:} 
